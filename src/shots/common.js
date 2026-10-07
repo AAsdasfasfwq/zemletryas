@@ -11,7 +11,7 @@ export const WINTER_DUSK = { tod: 'winterDusk', windows: 0.7, lamps: 1, snow: 1,
 export const NIGHT_SNOW = { tod: 'night', windows: 0.9, lamps: 1, snow: 0.8, snowCover: 1, traffic: 0.25, people: 'none' };
 export const NIGHT_RAIN = { tod: 'stormNight', windows: 0.85, lamps: 1, snow: 0.35, rain: 1, wet: true, snowCover: 1, traffic: 0.12, people: 'none' };
 export const SLEEP = { tod: 'night', windows: 0.12, lamps: 1, snow: 0.6, snowCover: 1, traffic: 0, people: 'none' };
-export const BLACKOUT = { tod: 'blackout', windows: 0, lamps: 0, snow: 0.6, rain: 0.4, snowCover: 1, traffic: 0, people: 'none', destroyed: true, haze: 1, hazeColor: [0.32, 0.31, 0.3], fires: true, smoke: true, fogMul: 2.2, fogColor: [0.05, 0.05, 0.06] };
+export const BLACKOUT = { tod: 'blackout', windows: 0, lamps: 0, snow: 0.6, rain: 0.4, snowCover: 1, traffic: 0, people: 'none', destroyed: true, haze: 0.5, hazeColor: [0.13, 0.125, 0.125], fires: true, smoke: true, fogMul: 1.0, fogColor: [0.07, 0.08, 0.11] };
 export const RUINS_DAY = { tod: 'overcast', windows: 0, lamps: 0, traffic: 0, people: 'none', destroyed: true, haze: 1, smoke: true, snowCover: 1, fogMul: 1.6 };
 
 export function city(c, o) { const s = c.use('city'); s.update(c.t, { camera: c.cam, ...o }); c.post.exposure = s.exposure; return s; }

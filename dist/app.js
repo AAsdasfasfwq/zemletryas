@@ -27251,7 +27251,7 @@ void main(){ float a = texture2D(map, vUv).a * vA * uOpacity; if(a < 0.004) disc
     winterDusk: { sky: "winterDusk", sun: [0.7, 0.08, -0.6], sunColor: 9411520, sunI: 0.5, hemiSky: 5925008, hemiGround: 2763317, hemiI: 0.9, fog: 4870244, fogD: 28e-4, env: 0.8, exposure: 1.15 },
     night: { sky: "night", sun: [-0.4, 0.55, 0.5], sunColor: 9414360, sunI: 0.38, hemiSky: 2372186, hemiGround: 921108, hemiI: 0.55, fog: 725024, fogD: 22e-4, env: 0.6, exposure: 1.2 },
     stormNight: { sky: "stormNight", sun: [-0.4, 0.6, 0.5], sunColor: 6976656, sunI: 0.22, hemiSky: 1712176, hemiGround: 592140, hemiI: 0.5, fog: 790036, fogD: 3e-3, env: 0.5, exposure: 1.25 },
-    blackout: { sky: "stormNight", sun: [-0.4, 0.6, 0.5], sunColor: 4871280, sunI: 0.12, hemiSky: 1185314, hemiGround: 394760, hemiI: 0.35, fog: 658191, fogD: 4e-3, env: 0.3, exposure: 1.35 },
+    blackout: { sky: "stormNight", sun: [-0.45, 0.55, 0.5], sunColor: 8492748, sunI: 0.55, hemiSky: 3359327, hemiGround: 1840914, hemiI: 0.8, fog: 1185573, fogD: 26e-4, env: 0.5, exposure: 1.3 },
     dawnGrey: { sky: "dawnGrey", sun: [0.6, 0.25, -0.5], sunColor: 15258296, sunI: 1.2, hemiSky: 12041414, hemiGround: 6183508, hemiI: 1.3, fog: 9408402, fogD: 3e-3, env: 1, exposure: 1.1 }
   };
   var CitySet = class {
@@ -27712,6 +27712,30 @@ void main(){ float a = texture2D(map, vUv).a * vA * uOpacity; if(a < 0.004) disc
         this.fires.add(L2);
         f.userData.light = L2;
       }
+      this.bigFires = new Group();
+      this.after.add(this.bigFires);
+      const fireRubbles = this.rubbles.filter((rb) => rb.userData.building !== this.hero && rb.position.distanceTo(hp) > 25).sort((a, b) => a.position.length() - b.position.length());
+      const ffr = new RNG(4417);
+      fireRubbles.filter((_, k) => k % 2 === 0).slice(0, 7).forEach((rb, k) => {
+        const x = rb.position.x + (ffr.next() - 0.5) * 6, z = rb.position.z + (ffr.next() - 0.5) * 6;
+        const sc = 0.8 + ffr.next() * 0.6;
+        const y0 = 1.2 + rb.userData.building.floors * 0.22;
+        const f = fireStream({ origin: [x, y0, z], radius: 1.8 * sc, height: 5.5 * sc, count: 110, seed: 140 + k, scale: 4.2 * sc });
+        this.bigFires.add(f);
+        const glow = new Sprite(new SpriteMaterial({ map: glowTexture(), color: new Color(1.6, 0.62, 0.2), blending: AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.55 }));
+        glow.position.set(x, y0 + 3 * sc, z);
+        glow.scale.setScalar(26 * sc);
+        this.bigFires.add(glow);
+        const sm = smokeStream({ origin: [x, y0 + 5 * sc, z], count: 50, seed: 160 + k, height: 45, size: [5, 24], life: 14, color: [0.07, 0.065, 0.06], opacity: 0.7, wind: [1.5, 0, 0.4] });
+        this.bigFires.add(sm);
+        if (k < 6) {
+          const L2 = new PointLight(16742960, 0, 110, 1.5);
+          L2.position.set(x, y0 + 4 * sc, z);
+          L2.userData.base = 420 * sc;
+          this.bigFires.add(L2);
+          f.userData.light = L2;
+        }
+      });
       this.smokeCols = new Group();
       this.after.add(this.smokeCols);
       for (let k = 0; k < 7; k++) {
@@ -27891,7 +27915,7 @@ void main(){ float a = texture2D(map, vUv).a * vA * uOpacity; if(a < 0.004) disc
       this.rubbleLights = new Sprites(30, (i, rr) => {
         const b = this.rubbles[i % this.rubbles.length];
         const p0 = b ? b.position : new Vector3();
-        return { pos: [p0.x + (rr.next() - 0.5) * 8, 0.6 + rr.next() * 2.2, p0.z + (rr.next() - 0.5) * 8], vel: [0, 0, 0], birth: -1e5, life: 1e9, size0: 0.35, color: [0.7, 0.85, 1.4], alpha: 0.8 };
+        return { pos: [p0.x + (rr.next() - 0.5) * 8, 0.6 + rr.next() * 2.2, p0.z + (rr.next() - 0.5) * 8], vel: [0, 0, 0], birth: -1e5, life: 1e9, size0: 0.6, color: [0.8, 0.95, 1.6], alpha: 0.9 };
       }, { map: glowTexture(), additive: true, fadeIn: 0, fadeOut: 0 });
       this.rubbleLights.visible = false;
       s.add(this.rubbleLights);
@@ -27904,7 +27928,7 @@ void main(){ float a = texture2D(map, vUv).a * vA * uOpacity; if(a < 0.004) disc
           side: DoubleSide,
           uniforms: { a: { value: 0 }, color: { value: new Color(1, 0.95, 0.85) } },
           vertexShader: "varying float vY; varying vec3 vN; varying vec3 vV; void main(){ vY = position.y; vN = normalize(normalMatrix*normal); vec4 mv = modelViewMatrix*vec4(position,1.0); vV = normalize(-mv.xyz); gl_Position = projectionMatrix*mv; }",
-          fragmentShader: "uniform float a; uniform vec3 color; varying float vY; varying vec3 vN; varying vec3 vV; void main(){ float along = clamp(0.5 - vY, 0.0, 1.0); float edge = pow(abs(dot(vN, vV)), 1.5); gl_FragColor = vec4(color * a * (1.0 - along) * (1.0-along) * edge * 0.35, 1.0); }"
+          fragmentShader: "uniform float a; uniform vec3 color; varying float vY; varying vec3 vN; varying vec3 vV; void main(){ float along = clamp(0.5 - vY, 0.0, 1.0); float edge = pow(abs(dot(vN, vV)), 1.5); gl_FragColor = vec4(color * a * (1.0 - along) * (1.0-along) * edge * 0.16, 1.0); }"
         }));
         m.visible = false;
         m.frustumCulled = false;
@@ -27990,7 +28014,7 @@ void main(){ float a = texture2D(map, vUv).a * vA * uOpacity; if(a < 0.004) disc
       if (!L2) return;
       L2.position.set(...pos);
       L2.target.position.set(...target);
-      L2.intensity = 900 * k;
+      L2.intensity = 150 * k;
       L2.angle = 0.28;
       L2.penumbra = 0.6;
       L2.distance = 60;
@@ -28146,6 +28170,12 @@ void main(){ float a = texture2D(map, vUv).a * vA * uOpacity; if(a < 0.004) disc
         this.fires.children.forEach((c2) => {
           if (c2.material && c2.material.uniforms && c2.material.uniforms.uTime) c2.material.uniforms.uTime.value = t;
           if (c2.userData.light) c2.userData.light.intensity = o.fires ? 25 + Math.sin(t * 13 + c2.id) * 6 : 0;
+        });
+        this.bigFires.visible = !!o.fires;
+        if (o.fires) this.bigFires.children.forEach((c2) => {
+          if (c2.material && c2.material.uniforms && c2.material.uniforms.uTime) c2.material.uniforms.uTime.value = t;
+          if (c2.isPointLight) c2.intensity = c2.userData.base * (0.85 + 0.15 * Math.sin(t * 9 + c2.id) * Math.sin(t * 5.3 + c2.id * 2));
+          if (c2.isSprite) c2.material.opacity = 0.5 + 0.08 * Math.sin(t * 7 + c2.id);
         });
         this.smokeCols.visible = !!o.smoke;
         this.smokeCols.children.forEach((c2) => c2.material.uniforms.uTime.value = t);
@@ -30962,6 +30992,47 @@ vec3 waves(vec3 p){
         this.whiteHelmets.push(p);
         p.visible = false;
       }
+      this.rig = new Group();
+      this.rig.position.set(5, 0, 16);
+      this.ruins.add(this.rig);
+      this.rig.visible = false;
+      const rigM = mat("#2b2e33", { metal: 0.6, rough: 0.5 });
+      for (let k = 0; k < 3; k++) {
+        const a = k / 3 * TAU;
+        const leg = cyl(0.04, 0.04, 4.3, rigM, Math.cos(a) * 0.7, 2, Math.sin(a) * 0.7, 6);
+        leg.rotation.set(Math.sin(a) * 0.17, 0, -Math.cos(a) * 0.17);
+        this.rig.add(leg);
+      }
+      this.rig.add(cyl(0.05, 0.05, 1.2, rigM, 0, 4.4, 0, 6));
+      this.floodHead = box(1, 0.7, 0.25, new MeshBasicMaterial({ color: 16777215 }), 0, 5, 0);
+      this.floodHead.lookAt(new Vector3(-7, 1, -7));
+      this.rig.add(this.floodHead);
+      this.rig.add(box(1.2, 0.8, 0.7, mat("#c8a21e", { rough: 0.6 }), 1.6, 0.4, 0.8));
+      const fg = new Sprite(new SpriteMaterial({ map: glowTexture(), color: new Color(1.4, 1.35, 1.2), blending: AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.7 }));
+      fg.position.set(0, 5, 0);
+      fg.scale.setScalar(4.5);
+      this.rig.add(fg);
+      this.flood = new SpotLight(16773340, 0, 70, 0.6, 0.55, 1.5);
+      this.flood.position.set(5, 5, 16);
+      this.flood.target.position.set(-2, 1, 9);
+      s.add(this.flood, this.flood.target);
+      this.ruinFires = new Group();
+      this.ruinFires.visible = false;
+      s.add(this.ruinFires);
+      [[-22, 2.5, -6, 1], [24, 2, 4, 0.8], [-10, 3, -28, 1.3], [40, 2, -24, 1.1]].forEach(([x, y, z, sc], k) => {
+        this.ruinFires.add(fireStream({ origin: [x, y, z], radius: 1.4 * sc, height: 4.5 * sc, count: 90, seed: 420 + k, scale: 3.4 * sc }));
+        this.ruinFires.add(smokeStream({ origin: [x, y + 4 * sc, z], count: 40, seed: 440 + k, height: 35, size: [4, 18], life: 12, color: [0.07, 0.065, 0.06], opacity: 0.65, wind: [1.2, 0, 0.3] }));
+        const gl = new Sprite(new SpriteMaterial({ map: glowTexture(), color: new Color(1.6, 0.62, 0.2), blending: AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.5 }));
+        gl.position.set(x, y + 2.5 * sc, z);
+        gl.scale.setScalar(20 * sc);
+        this.ruinFires.add(gl);
+        if (k < 3) {
+          const L2 = new PointLight(16742960, 0, 80, 1.5);
+          L2.position.set(x, y + 3 * sc, z);
+          L2.userData.base = 260 * sc;
+          this.ruinFires.add(L2);
+        }
+      });
       this.camp = new Group();
       this.camp.position.set(300, 0, 0);
       s.add(this.camp);
@@ -31077,7 +31148,7 @@ vec3 waves(vec3 p){
         this.mood = mood;
         this.sky.setPreset(mood);
         this.scene.environment = this.envs[mood];
-        const P2 = { dusty: [16766880, 3.2, [0.6, 0.45, -0.5], 14272944, 6969928, 1, 13217930, 12e-4], winterDusk: [10465488, 0.7, [0.6, 0.1, -0.6], 6977688, 2763312, 1, 4870244, 25e-4], overcast: [14672874, 1.4, [0.3, 0.8, -0.3], 13159636, 6973023, 1.4, 10331050, 15e-4], stormNight: [5923976, 0.25, [-0.4, 0.6, 0.5], 1712176, 592140, 0.45, 790036, 4e-3] }[mood];
+        const P2 = { dusty: [16766880, 3.2, [0.6, 0.45, -0.5], 14272944, 6969928, 1, 13217930, 12e-4], winterDusk: [10465488, 0.7, [0.6, 0.1, -0.6], 6977688, 2763312, 1, 4870244, 25e-4], overcast: [14672874, 1.4, [0.3, 0.8, -0.3], 13159636, 6973023, 1.4, 10331050, 15e-4], stormNight: [8492748, 0.6, [-0.45, 0.55, 0.5], 3425119, 1840914, 0.85, 1251366, 22e-4] }[mood];
         this.sun.color.set(P2[0]);
         this.sun.intensity = P2[1];
         this.sunDir = new Vector3(...P2[2]).normalize();
@@ -31132,7 +31203,16 @@ vec3 waves(vec3 p){
       });
       this.haze.visible = o.haze !== false;
       this.haze.setTime(10 + t * 0.02);
-      this.haze.material.uniforms.uColor.value.setRGB(...mood === "dusty" ? [0.85, 0.75, 0.6] : [0.45, 0.47, 0.52]);
+      this.haze.material.uniforms.uColor.value.setRGB(...mood === "dusty" ? [0.85, 0.75, 0.6] : mood === "stormNight" ? [0.12, 0.125, 0.14] : [0.45, 0.47, 0.52]);
+      const nightRescue = mood === "stormNight" && !!o.after;
+      this.rig.visible = nightRescue;
+      this.flood.intensity = nightRescue ? 380 : 0;
+      this.floodHead.material.color.setScalar(nightRescue ? 6 : 0.3);
+      this.ruinFires.visible = nightRescue;
+      this.ruinFires.children.forEach((c) => {
+        if (c.material && c.material.uniforms && c.material.uniforms.uTime) c.material.uniforms.uTime.value = t;
+        if (c.isPointLight) c.intensity = nightRescue ? c.userData.base * (0.85 + 0.15 * Math.sin(t * 9 + c.id)) : 0;
+      });
       this.megaDust.visible = o.megaDust !== void 0;
       if (this.megaDust.visible) this.megaDust.setTime(o.megaDust);
     }
@@ -32137,7 +32217,7 @@ void main(){
   var NIGHT_SNOW = { tod: "night", windows: 0.9, lamps: 1, snow: 0.8, snowCover: 1, traffic: 0.25, people: "none" };
   var NIGHT_RAIN = { tod: "stormNight", windows: 0.85, lamps: 1, snow: 0.35, rain: 1, wet: true, snowCover: 1, traffic: 0.12, people: "none" };
   var SLEEP = { tod: "night", windows: 0.12, lamps: 1, snow: 0.6, snowCover: 1, traffic: 0, people: "none" };
-  var BLACKOUT = { tod: "blackout", windows: 0, lamps: 0, snow: 0.6, rain: 0.4, snowCover: 1, traffic: 0, people: "none", destroyed: true, haze: 1, hazeColor: [0.32, 0.31, 0.3], fires: true, smoke: true, fogMul: 2.2, fogColor: [0.05, 0.05, 0.06] };
+  var BLACKOUT = { tod: "blackout", windows: 0, lamps: 0, snow: 0.6, rain: 0.4, snowCover: 1, traffic: 0, people: "none", destroyed: true, haze: 0.5, hazeColor: [0.13, 0.125, 0.125], fires: true, smoke: true, fogMul: 1, fogColor: [0.07, 0.08, 0.11] };
   var RUINS_DAY = { tod: "overcast", windows: 0, lamps: 0, traffic: 0, people: "none", destroyed: true, haze: 1, smoke: true, snowCover: 1, fogMul: 1.6 };
   function city(c, o) {
     const s = c.use("city");
@@ -34624,7 +34704,7 @@ void main(){
     S(T("millions of tons of concrete dust"), (c) => {
       c.cam.fov = 38;
       c.look(V(HP[0] + 14, 2, HP[1] + 24), V(HP[0], 2.5, HP[1] + 8));
-      const s = city(c, { ...BLACKOUT, haze: 1.5, hazeColor: [0.45, 0.43, 0.4], rescuers: true, focus: [HP[0], HP[1] + 10, 30] });
+      const s = city(c, { ...BLACKOUT, haze: 1.1, hazeColor: [0.2, 0.19, 0.18], rescuers: true, focus: [HP[0], HP[1] + 10, 30] });
       s.flashlight(0, [HP[0] + 4, 1.8, HP[1] + 12], [HP[0] - 2 + Math.sin(c.t * 0.7) * 3, 1, HP[1] + 4], 1);
       s.flashlight(1, [HP[0] - 5, 2, HP[1] + 10], [HP[0] + 2, 0.5, HP[1] + 6 + Math.cos(c.t * 0.5) * 2], 0.8);
       grade(c, "night", { saturation: 0.7 });
@@ -34633,7 +34713,7 @@ void main(){
     S(T("it stings the eyes"), (c) => {
       c.cam.fov = 34;
       c.look(V(HP[0] + 6.5, 1.5, HP[1] + 19), V(HP[0] + 3, 1.4, HP[1] + 15));
-      const s = city(c, { ...BLACKOUT, haze: 1.4, hazeColor: [0.45, 0.43, 0.4], focus: [HP[0], HP[1] + 14, 20], feat: [{ kind: "pj", i: 0, pos: [HP[0] + 3, 0, HP[1] + 15], ry: 0.6, pose: "cry" }, { kind: "pj", i: 1, pos: [HP[0] + 1.6, 0, HP[1] + 14.4], ry: 0.9, pose: "shiver" }] });
+      const s = city(c, { ...BLACKOUT, haze: 1, hazeColor: [0.2, 0.19, 0.18], focus: [HP[0], HP[1] + 14, 20], feat: [{ kind: "pj", i: 0, pos: [HP[0] + 3, 0, HP[1] + 15], ry: 0.6, pose: "cry" }, { kind: "pj", i: 1, pos: [HP[0] + 1.6, 0, HP[1] + 14.4], ry: 0.9, pose: "shiver" }] });
       s.flashlight(0, [HP[0] + 9, 2.2, HP[1] + 20], [HP[0] + 2.5, 1.2, HP[1] + 14.5], 1, 14);
       grade(c, "night", { saturation: 0.7 });
       dof(c, 4.5, 0.6);

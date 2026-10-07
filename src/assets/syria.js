@@ -79,6 +79,23 @@ export class SyriaSet {
     this.ruinPeople = []; for (let k = 0; k < 8; k++) { const p = new Person(800 + k, { coat: r.pick(['#4a3f35', '#3a3a40', '#5a4a3a']) }); p.position.set((r.next() - 0.5) * 30, 0, (r.next() - 0.5) * 10); p.rotation.y = r.next() * TAU; this.ruins.add(p); this.ruinPeople.push(p); }
     this.whiteHelmets = []; for (let k = 0; k < 8; k++) { const p = new Person(850 + k, { helmet: '#f4f4f4', coat: '#3a3a3a', headlamp: true }); p.position.set(-6 + (k % 4) * 3 + r.next(), 1.2 + r.next(), 10 + Math.floor(k / 4) * 2); p.rotation.y = r.next() * TAU; this.ruins.add(p); this.whiteHelmets.push(p); p.visible = false; }
 
+    // flood light on a tripod + small generator (lights the night dig), fires in the rubble
+    this.rig = new THREE.Group(); this.rig.position.set(5, 0, 16); this.ruins.add(this.rig); this.rig.visible = false;
+    const rigM = mat('#2b2e33', { metal: 0.6, rough: 0.5 });
+    for (let k = 0; k < 3; k++) { const a = k / 3 * TAU; const leg = cyl(0.04, 0.04, 4.3, rigM, Math.cos(a) * 0.7, 2.0, Math.sin(a) * 0.7, 6); leg.rotation.set(Math.sin(a) * 0.17, 0, -Math.cos(a) * 0.17); this.rig.add(leg); }
+    this.rig.add(cyl(0.05, 0.05, 1.2, rigM, 0, 4.4, 0, 6));
+    this.floodHead = box(1.0, 0.7, 0.25, new THREE.MeshBasicMaterial({ color: 0xffffff }), 0, 5.0, 0); this.floodHead.lookAt(new THREE.Vector3(-7, 1, -7)); this.rig.add(this.floodHead);
+    this.rig.add(box(1.2, 0.8, 0.7, mat('#c8a21e', { rough: 0.6 }), 1.6, 0.4, 0.8));
+    const fg = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: new THREE.Color(1.4, 1.35, 1.2), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.7 })); fg.position.set(0, 5.0, 0); fg.scale.setScalar(4.5); this.rig.add(fg);
+    this.flood = new THREE.SpotLight(0xfff0dc, 0, 70, 0.6, 0.55, 1.5); this.flood.position.set(5, 5, 16); this.flood.target.position.set(-2, 1, 9); s.add(this.flood, this.flood.target);
+    this.ruinFires = new THREE.Group(); this.ruinFires.visible = false; s.add(this.ruinFires);
+    [[-22, 2.5, -6, 1.0], [24, 2.0, 4, 0.8], [-10, 3.0, -28, 1.3], [40, 2.0, -24, 1.1]].forEach(([x, y, z, sc], k) => {
+      this.ruinFires.add(fireStream({ origin: [x, y, z], radius: 1.4 * sc, height: 4.5 * sc, count: 90, seed: 420 + k, scale: 3.4 * sc }));
+      this.ruinFires.add(smokeStream({ origin: [x, y + 4 * sc, z], count: 40, seed: 440 + k, height: 35, size: [4, 18], life: 12, color: [0.07, 0.065, 0.06], opacity: 0.65, wind: [1.2, 0, 0.3] }));
+      const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: new THREE.Color(1.6, 0.62, 0.2), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.5 })); gl.position.set(x, y + 2.5 * sc, z); gl.scale.setScalar(20 * sc); this.ruinFires.add(gl);
+      if (k < 3) { const L = new THREE.PointLight(0xff7a30, 0, 80, 1.5); L.position.set(x, y + 3 * sc, z); L.userData.base = 260 * sc; this.ruinFires.add(L); }
+    });
+
     // ---------- Idlib camp (x ~ 300) ----------
     this.camp = new THREE.Group(); this.camp.position.set(300, 0, 0); s.add(this.camp);
     const tentM = [mat('#f2efe6', { rough: 0.95, side: THREE.DoubleSide }), mat('#5b8fc7', { rough: 0.9, side: THREE.DoubleSide }), mat('#c9d7e8', { rough: 0.95, side: THREE.DoubleSide })];
@@ -115,7 +132,7 @@ export class SyriaSet {
     const mood = o.mood || 'dusty';
     if (this.mood !== mood) {
       this.mood = mood; this.sky.setPreset(mood); this.scene.environment = this.envs[mood];
-      const P = { dusty: [0xffd7a0, 3.2, [0.6, 0.45, -0.5], 0xd9c9b0, 0x6a5a48, 1.0, 0xc9b08a, 0.0012], winterDusk: [0x9fb0d0, 0.7, [0.6, 0.1, -0.6], 0x6a7898, 0x2a2a30, 1.0, 0x4a5064, 0.0025], overcast: [0xdfe3ea, 1.4, [0.3, 0.8, -0.3], 0xc8ccd4, 0x6a665f, 1.4, 0x9da3aa, 0.0015], stormNight: [0x5a6488, 0.25, [-0.4, 0.6, 0.5], 0x1a2030, 0x09090c, 0.45, 0x0c0e14, 0.004] }[mood];
+      const P = { dusty: [0xffd7a0, 3.2, [0.6, 0.45, -0.5], 0xd9c9b0, 0x6a5a48, 1.0, 0xc9b08a, 0.0012], winterDusk: [0x9fb0d0, 0.7, [0.6, 0.1, -0.6], 0x6a7898, 0x2a2a30, 1.0, 0x4a5064, 0.0025], overcast: [0xdfe3ea, 1.4, [0.3, 0.8, -0.3], 0xc8ccd4, 0x6a665f, 1.4, 0x9da3aa, 0.0015], stormNight: [0x8196cc, 0.6, [-0.45, 0.55, 0.5], 0x34435f, 0x1c1712, 0.85, 0x131826, 0.0022] }[mood];
       this.sun.color.set(P[0]); this.sun.intensity = P[1]; this.sunDir = new THREE.Vector3(...P[2]).normalize(); this.sky.setSun(this.sunDir);
       this.hemi.color.set(P[3]); this.hemi.groundColor.set(P[4]); this.hemi.intensity = P[5]; this.scene.fog.color.set(P[6]); this.scene.fog.density = P[7];
     }
@@ -136,7 +153,10 @@ export class SyriaSet {
     for (const p of this.campPeople) p.pose(p.userData.walk ? 'walk' : 'shiver', t);
     for (const p of this.ruinPeople) p.pose('walk', t);
     this.whiteHelmets.forEach((p, k) => { p.visible = !!o.helmets; if (p.visible) p.pose(k % 3 === 0 ? 'carry' : 'dig', t); });
-    this.haze.visible = o.haze !== false; this.haze.setTime(10 + t * 0.02); this.haze.material.uniforms.uColor.value.setRGB(...(mood === 'dusty' ? [0.85, 0.75, 0.6] : [0.45, 0.47, 0.52]));
+    this.haze.visible = o.haze !== false; this.haze.setTime(10 + t * 0.02); this.haze.material.uniforms.uColor.value.setRGB(...(mood === 'dusty' ? [0.85, 0.75, 0.6] : mood === 'stormNight' ? [0.12, 0.125, 0.14] : [0.45, 0.47, 0.52]));
+    // night rescue in the Aleppo ruins: generator flood light + burning rubble
+    const nightRescue = mood === 'stormNight' && !!o.after; this.rig.visible = nightRescue; this.flood.intensity = nightRescue ? 380 : 0; this.floodHead.material.color.setScalar(nightRescue ? 6 : 0.3);
+    this.ruinFires.visible = nightRescue; this.ruinFires.children.forEach((c) => { if (c.material && c.material.uniforms && c.material.uniforms.uTime) c.material.uniforms.uTime.value = t; if (c.isPointLight) c.intensity = nightRescue ? c.userData.base * (0.85 + 0.15 * Math.sin(t * 9 + c.id)) : 0; });
     this.megaDust.visible = o.megaDust !== undefined; if (this.megaDust.visible) this.megaDust.setTime(o.megaDust);
   }
 }

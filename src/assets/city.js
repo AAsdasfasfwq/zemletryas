@@ -21,7 +21,7 @@ const TOD = {
   winterDusk: { sky: 'winterDusk', sun: [0.7, 0.08, -0.6], sunColor: 0x8f9bc0, sunI: 0.5, hemiSky: 0x5a6890, hemiGround: 0x2a2a35, hemiI: 0.9, fog: 0x4a5064, fogD: 0.0028, env: 0.8, exposure: 1.15 },
   night: { sky: 'night', sun: [-0.4, 0.55, 0.5], sunColor: 0x8fa6d8, sunI: 0.38, hemiSky: 0x24325a, hemiGround: 0x0e0e14, hemiI: 0.55, fog: 0x0b1020, fogD: 0.0022, env: 0.6, exposure: 1.2 },
   stormNight: { sky: 'stormNight', sun: [-0.4, 0.6, 0.5], sunColor: 0x6a7490, sunI: 0.22, hemiSky: 0x1a2030, hemiGround: 0x09090c, hemiI: 0.5, fog: 0x0c0e14, fogD: 0.003, env: 0.5, exposure: 1.25 },
-  blackout: { sky: 'stormNight', sun: [-0.4, 0.6, 0.5], sunColor: 0x4a5470, sunI: 0.12, hemiSky: 0x121622, hemiGround: 0x060608, hemiI: 0.35, fog: 0x0a0b0f, fogD: 0.004, env: 0.3, exposure: 1.35 },
+  blackout: { sky: 'stormNight', sun: [-0.45, 0.55, 0.5], sunColor: 0x8196cc, sunI: 0.55, hemiSky: 0x33425f, hemiGround: 0x1c1712, hemiI: 0.8, fog: 0x121725, fogD: 0.0026, env: 0.5, exposure: 1.3 },
   dawnGrey: { sky: 'dawnGrey', sun: [0.6, 0.25, -0.5], sunColor: 0xe8d2b8, sunI: 1.2, hemiSky: 0xb7bcc6, hemiGround: 0x5e5a54, hemiI: 1.3, fog: 0x8f8f92, fogD: 0.0030, env: 1.0, exposure: 1.1 },
 };
 
@@ -238,6 +238,17 @@ export class CitySet {
       const f = fireStream({ origin: [x, 0.95, z], radius: 0.25, height: 1.3, count: 60, seed: 50 + k, scale: 0.9 }); this.fires.add(f);
       const L = new THREE.PointLight(0xff8a3a, 0, 14, 2); L.position.set(x, 1.5, z); this.fires.add(L); f.userData.light = L;
     }
+    // big fires burning on collapsed blocks (night shots read by firelight)
+    this.bigFires = new THREE.Group(); this.after.add(this.bigFires);
+    const fireRubbles = this.rubbles.filter((rb) => rb.userData.building !== this.hero && rb.position.distanceTo(hp) > 25).sort((a, b) => a.position.length() - b.position.length());
+    const ffr = new RNG(4417);
+    fireRubbles.filter((_, k) => k % 2 === 0).slice(0, 7).forEach((rb, k) => {
+      const x = rb.position.x + (ffr.next() - 0.5) * 6, z = rb.position.z + (ffr.next() - 0.5) * 6; const sc = 0.8 + ffr.next() * 0.6; const y0 = 1.2 + rb.userData.building.floors * 0.22;
+      const f = fireStream({ origin: [x, y0, z], radius: 1.8 * sc, height: 5.5 * sc, count: 110, seed: 140 + k, scale: 4.2 * sc }); this.bigFires.add(f);
+      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: new THREE.Color(1.6, 0.62, 0.2), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.55 })); glow.position.set(x, y0 + 3 * sc, z); glow.scale.setScalar(26 * sc); this.bigFires.add(glow);
+      const sm = smokeStream({ origin: [x, y0 + 5 * sc, z], count: 50, seed: 160 + k, height: 45, size: [5, 24], life: 14, color: [0.07, 0.065, 0.06], opacity: 0.7, wind: [1.5, 0, 0.4] }); this.bigFires.add(sm);
+      if (k < 6) { const L = new THREE.PointLight(0xff7a30, 0, 110, 1.5); L.position.set(x, y0 + 4 * sc, z); L.userData.base = 420 * sc; this.bigFires.add(L); f.userData.light = L; }
+    });
     this.smokeCols = new THREE.Group(); this.after.add(this.smokeCols);
     for (let k = 0; k < 7; k++) { const a = fr.next() * TAU, rad = 40 + fr.next() * 140; const sm = smokeStream({ origin: [Math.cos(a) * rad, 2, Math.sin(a) * rad], count: 60, seed: 90 + k, height: 50, size: [6, 28], life: 16, color: [0.22, 0.21, 0.2], opacity: 0.6, wind: [1.5, 0, 0.4] }); this.smokeCols.add(sm); }
     // haze puffs that hang over the ruins (dust in the air)
@@ -308,14 +319,14 @@ export class CitySet {
     this.gas = loopStream({ count: 70, origin: [hpos.x + 9, 0.6, hpos.z + 12], jitter: 0.15, vel: [2.6, 1.4, 0.6], velJitter: 0.5, life: 1.6, size: [0.15, 2.2], color: [0.9, 0.92, 0.95], seed: 71, opacity: 0.55, drag: 0.9 }); this.gas.visible = false; s.add(this.gas);
     this.poleSparks = sparkBurst({ count: 90, center: [hpos.x + 20, 6, hpos.z + 18], speed: 6, seed: 72, color: [0.8, 0.9, 1], spread: 1.2, floorY: 0 }); this.poleSparks.visible = false; s.add(this.poleSparks);
     // phone lights glimmering inside rubble
-    this.rubbleLights = new Sprites(30, (i, rr) => { const b = this.rubbles[i % this.rubbles.length]; const p0 = b ? b.position : new THREE.Vector3(); return { pos: [p0.x + (rr.next() - 0.5) * 8, 0.6 + rr.next() * 2.2, p0.z + (rr.next() - 0.5) * 8], vel: [0, 0, 0], birth: -1e5, life: 1e9, size0: 0.35, color: [0.7, 0.85, 1.4], alpha: 0.8 }; }, { map: glowTexture(), additive: true, fadeIn: 0, fadeOut: 0 });
+    this.rubbleLights = new Sprites(30, (i, rr) => { const b = this.rubbles[i % this.rubbles.length]; const p0 = b ? b.position : new THREE.Vector3(); return { pos: [p0.x + (rr.next() - 0.5) * 8, 0.6 + rr.next() * 2.2, p0.z + (rr.next() - 0.5) * 8], vel: [0, 0, 0], birth: -1e5, life: 1e9, size0: 0.6, color: [0.8, 0.95, 1.6], alpha: 0.9 }; }, { map: glowTexture(), additive: true, fadeIn: 0, fadeOut: 0 });
     this.rubbleLights.visible = false; s.add(this.rubbleLights);
     // a parked car with blinking hazard lights (car alarm)
     this.alarmCar = this.parked[3];
     // volumetric flashlight beams (paired with the spot lights)
     this.beams = this.spots.map(() => { const m = new THREE.Mesh(new THREE.ConeGeometry(1, 1, 32, 1, true), new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, uniforms: { a: { value: 0 }, color: { value: new THREE.Color(1, 0.95, 0.85) } },
       vertexShader: 'varying float vY; varying vec3 vN; varying vec3 vV; void main(){ vY = position.y; vN = normalize(normalMatrix*normal); vec4 mv = modelViewMatrix*vec4(position,1.0); vV = normalize(-mv.xyz); gl_Position = projectionMatrix*mv; }',
-      fragmentShader: 'uniform float a; uniform vec3 color; varying float vY; varying vec3 vN; varying vec3 vV; void main(){ float along = clamp(0.5 - vY, 0.0, 1.0); float edge = pow(abs(dot(vN, vV)), 1.5); gl_FragColor = vec4(color * a * (1.0 - along) * (1.0-along) * edge * 0.35, 1.0); }' })); m.visible = false; m.frustumCulled = false; s.add(m); return m; });
+      fragmentShader: 'uniform float a; uniform vec3 color; varying float vY; varying vec3 vN; varying vec3 vV; void main(){ float along = clamp(0.5 - vY, 0.0, 1.0); float edge = pow(abs(dot(vN, vV)), 1.5); gl_FragColor = vec4(color * a * (1.0 - along) * (1.0-along) * edge * 0.16, 1.0); }' })); m.visible = false; m.frustumCulled = false; s.add(m); return m; });
     // shot-controlled characters for close-ups
     this.featured = { day: [], pj: [], resc: [] };
     for (let k = 0; k < 6; k++) { const p = new Person(2000 + k, { coat: k % 2 ? '#6b4a3a' : null }); p.visible = false; s.add(p); this.featured.day.push(p); }
@@ -364,7 +375,7 @@ export class CitySet {
   // flashlight i: from pos toward target (arrays), intensity k (0..1)
   flashlight(i, pos, target, k = 1, len = 22) {
     const L = this.spots[i]; const b = this.beams[i]; if (!L) return;
-    L.position.set(...pos); L.target.position.set(...target); L.intensity = 900 * k; L.angle = 0.28; L.penumbra = 0.6; L.distance = 60; L.decay = 1.6; L.castShadow = false;
+    L.position.set(...pos); L.target.position.set(...target); L.intensity = 150 * k; L.angle = 0.28; L.penumbra = 0.6; L.distance = 60; L.decay = 1.6; L.castShadow = false;
     const P = new THREE.Vector3(...pos), Tg = new THREE.Vector3(...target); const dir = Tg.clone().sub(P).normalize();
     b.visible = k > 0; b.scale.set(len * 0.29, len, len * 0.29); b.position.copy(P).addScaledVector(dir, len / 2); b.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), dir); b.material.uniforms.a.value = k;
   }
@@ -444,6 +455,7 @@ export class CitySet {
       for (const p of this.rescuers) { p.visible = !!o.rescuers; if (p.visible) p.pose(p.seed % 3 === 0 ? 'carry' : 'dig', t); }
       for (const p of this.survivors) { p.visible = !!o.survivors; if (p.visible) p.pose(p.seed % 4 === 0 ? 'cry' : p.seed % 4 === 1 ? 'phone' : 'shiver', t); }
       this.fires.visible = !!o.fires; this.fires.children.forEach((c) => { if (c.material && c.material.uniforms && c.material.uniforms.uTime) c.material.uniforms.uTime.value = t; if (c.userData.light) c.userData.light.intensity = o.fires ? 25 + Math.sin(t * 13 + c.id) * 6 : 0; });
+      this.bigFires.visible = !!o.fires; if (o.fires) this.bigFires.children.forEach((c) => { if (c.material && c.material.uniforms && c.material.uniforms.uTime) c.material.uniforms.uTime.value = t; if (c.isPointLight) c.intensity = c.userData.base * (0.85 + 0.15 * Math.sin(t * 9 + c.id) * Math.sin(t * 5.3 + c.id * 2)); if (c.isSprite) c.material.opacity = 0.5 + 0.08 * Math.sin(t * 7 + c.id); });
       this.smokeCols.visible = !!o.smoke; this.smokeCols.children.forEach((c) => (c.material.uniforms.uTime.value = t));
     }
     this.haze.visible = (o.haze || 0) > 0; if (this.haze.visible) { this.haze.material.uniforms.uTime.value = 10 + t * 0.02; this.haze.opacity = o.haze * 0.5; this.haze.material.uniforms.uColor.value.setRGB(...(o.hazeColor || [0.7, 0.68, 0.63])); }
