@@ -19,7 +19,7 @@ export function act5(D) {
     b.update(c.t, { S: 14, hideSouth: c.u > 0.6, locked: 0.05, stress: 1, glow: 0.7, crack: 1, melt: 0.6, hypo: 0.8, heat: 0.6 }); grade(c, 'hell');
     const g = c.use2D(); if (c.u < 0.65) { const a = c.project(V(0, 0, 16)), bb = c.project(V(0, -12, 16)); if (!a.behind) revealText(g, '11 MILES', a.x + 40, (a.y + bb.y) / 2, { family: FONT.title, size: 110, color: '#fff', p: c.lt - 0.3, align: 'left', shadow: { color: 'rgba(0,0,0,0.6)', blur: 20 } }); } });
   cue(T('the last barrier between'), 'crumble', { gain: 0.6 });
-  S(T('the last barrier between'), (c) => { const b = c.use('block'); c.cam.fov = 26; c.look(V(0.4, -11.7, 5.5 - c.u), V(0, -12, 0)); b.update(c.t, { S: 14, hideSouth: true, locked: lerp(0.05, 0, smooth(c.lt / 1.2)), stress: 1, glow: 0.9, crack: 1, melt: 0.7, sparks: c.lt - 0.3 }); c.shake(0.3); grade(c, 'hell'); });
+  S(T('the last barrier between'), (c) => { const b = c.use('block'); c.cam.fov = 26; c.look(V(0.4, -11.7, 5.5 - c.u), V(0, -12, 0)); b.update(c.t, { S: 14, hideSouth: true, locked: lerp(0.05, 0, smooth(c.lt / 1.2)), stress: 1, glow: 0.9, crack: 1, melt: 0.7, sparks: c.lt - 0.3 }); c.shake(0.3); grade(c, 'hell', { bloomStrength: 0.45 }); });
   S(T('extreme pressure and friction'), (c) => { const b = c.use('block'); c.cam.fov = 32; dolly(c, V(8, -8, 16), V(4, -10, 12), V(0, -12, 0), V(0, -12, 0)); b.update(c.t, { S: 14, hideSouth: true, locked: 0, stress: 1, glow: 1.2, crack: 1, melt: 0.7 + c.u * 0.3 }); grade(c, 'hell');
     const g = c.use2D(); INFO.tag(g, c.lt - 2.0, 960, 930, 'THOUSANDS OF DEGREES', { size: 40, bg: 'rgba(120,20,0,0.6)' }); });
   S(T('turning it into a liquid'), (c) => { const b = c.use('block'); c.cam.fov = 24; c.look(V(-1 + c.u * 2, -12.5, 4.5), V(0, -12, 0)); b.update(c.t, { S: 14, hideSouth: true, locked: 0, stress: 1, glow: 1.4, crack: 1, melt: 1 }); grade(c, 'hell'); dof(c, 4.5, 0.8); });
@@ -43,7 +43,7 @@ export function act5(D) {
   cue(G0, 'rupture', { gain: 1.0 });
   S(G0, (c) => { const b = c.use('block'); c.cam.fov = 30; c.look(V(-1.5, -11.2, 6.5 - c.lt * 2), V(0, -12, 0)); b.update(c.t, { S: 15, hideSouth: true, locked: 0, stress: 1, glow: 2, crack: 1, melt: 1, sparks: c.lt, hypo: 1.5 }); c.shake(1.8, 14); grade(c, 'hell'); c.post.flash = Math.max(0, 1 - c.lt / 0.35); c.post.zoomBlur = 0.2 * Math.exp(-c.lt * 3); });
   S(G0 + 0.85, (c) => { const b = c.use('block'); c.cam.fov = 40; const st = c.lt; c.look(V(-30 - st * 2, 16 - st, 46 - st * 3), V(0, -5, 0));
-    b.update(c.t, { S: 15, snap: Math.min(1, st * 2.2) + Math.sin(st * 25) * 0.08 * Math.exp(-st * 2), waveT: st * 0.9, pAmp: 1.2, sAmp: 1.4, heat: 1 - smooth(st / 1.5) * 0.6, trace: 1, hypo: 1.2, dust: st, sparks: st, glow: 1, collapseHouses: smooth((st - 0.6) / 0.8), shake: 1 });
+    b.update(c.t, { S: 15, snap: Math.min(1, st * 2.2) + Math.sin(st * 25) * 0.08 * Math.exp(-st * 2), waveT: st * 0.9, pAmp: 1.2, sAmp: 1.4, heat: 1 - smooth(st / 1.5) * 0.6, trace: 1, hypo: 1.2, dust: st, traceDust: st, sparks: st, glow: 1, collapseHouses: smooth((st - 0.6) / 0.8), shake: 1 });
     c.shake(1.6, 11); grade(c, 'blood'); });
   S(G0 + 2.35, (c) => { c.cam.fov = 40; const e = mp(EPI1[0], EPI1[1], 0); c.look(V(e.x - 10 - c.lt * 4, 24 + c.lt * 6, e.z + 30 + c.lt * 6), V(e.x + 2, 0, e.z - 2));
     mapSet(c, { rupture: { t: c.lt * 1.2, scale: 1.6 }, faults: { EAF: 1, EAF_i: 0.4 }, area: smooth(c.lt / 1.5) * 0.4, focus: [e.x, e.z, 50] }); c.shake(0.6); grade(c, 'map', { temperature: 0.2 });
@@ -51,10 +51,10 @@ export function act5(D) {
   // after the silence: the narration resumes
   const tRock = T('the rock breaks'); const tCrack = T('deafening crack');
   cue(tCrack, 'crack', { gain: 0.9 });
-  S(tRock, (c) => { const b = c.use('block'); c.cam.fov = 34; c.look(V(-8 + c.lt * 1.5, 3, 7), V(0, 0, 0)); const st = c.t - tCrack;
-    b.update(c.t, { S: 15, snap: st < 0 ? 0.5 : Math.min(1, 0.5 + st * 1.5) + Math.sin(st * 20) * 0.1 * Math.exp(-st * 2), trace: 1, glow: 0.6, dust: st > 0 ? st : undefined, sparks: st > 0 ? st : undefined, waveT: 1.5 + c.lt * 0.5, sAmp: 0.6, shake: 0.8 });
+  S(tRock, (c) => { const b = c.use('block'); c.cam.fov = 38; c.look(V(-14 + c.lt * 2, 5, 12), V(2, 1, 0)); const st = c.t - tCrack;
+    b.update(c.t, { S: 15, snap: st < 0 ? 0.5 : Math.min(1, 0.5 + st * 1.5) + Math.sin(st * 20) * 0.1 * Math.exp(-st * 2), trace: 1, glow: 0.6, traceDust: st > -0.4 ? st + 0.4 : undefined, sparks: st > 0 ? st : undefined, waveT: 1.5 + c.lt * 0.5, sAmp: 0.6, shake: 0.8 });
     c.shake(st > 0 && st < 0.6 ? 2 : 0.8, 12); grade(c, 'blood'); dof(c, 9, 0.5); });
-  S(T('the underground seam gives way'), (c) => { const b = c.use('block'); c.cam.fov = 34; c.look(V(-12 + c.u * 24, -9, 14), V(-6 + c.u * 24, -12, 0)); b.update(c.t, { S: 15, hideSouth: true, locked: 0, stress: 1, glow: 1.5, crack: 1, melt: 1, sparks: c.lt % 1.2 }); c.shake(1.0); grade(c, 'hell'); c.post.whip = 0.03; c.post.whipDir = [1, 0]; });
+  S(T('the underground seam gives way'), (c) => { const b = c.use('block'); c.cam.fov = 40; c.look(V(-16 + c.u * 20, -6, 26), V(-6 + c.u * 14, -11, 0)); b.update(c.t, { S: 15, hideSouth: true, locked: 0, stress: 1, glow: 1.5, crack: 1, melt: 1, sparks: c.lt % 1.2 }); c.shake(1.0); grade(c, 'hell'); c.post.whip = 0.03; c.post.whipDir = [1, 0]; });
   const tRace = T('the rupture races'); const tTwo = TP('nearly two miles per second');
   cue(tRace, 'tear', { dur: 7, gain: 0.7 });
   S(tRace, (c) => { c.cam.fov = 40; const e = mp(EPI1[0], EPI1[1], 0); c.look(V(e.x + 30 - c.u * 20, 30 + c.u * 10, e.z + 40), V(e.x + 6, 0, e.z - 4));
@@ -66,11 +66,11 @@ export function act5(D) {
   // atomic bombs
   const tEnergy = T('it releases energy'); const tBombs = T('atomic bombs'); const gb = gapTime('bombs');
   cue(tEnergy + 0.1, 'nuke', { gain: 1.0 });
-  S(tEnergy, (c) => { const n = c.use('nukes'); c.cam.fov = 38; const tau = c.lt * 0.9; c.look(V(-2600 - c.lt * 60, 60 + c.lt * 10, 2600), V(0, 260 + tau * 70, 0)); n.update(c.t, { tau, heroScale: 1 }); grade(c, 'hell', { temperature: 0.15 }); c.post.flash = Math.max(0, 1 - c.lt / 0.4); c.shake(c.lt > 1.6 && c.lt < 3.5 ? 0.6 : 0.1);
+  S(tEnergy, (c) => { const n = c.use('nukes'); c.cam.fov = 40; c.cam.near = 1; c.cam.far = 60000; const tau = c.lt * 0.9; c.look(V(-2300 - c.lt * 80, 40 + c.lt * 10, 2300), V(0, 500 + tau * 260, 0)); n.update(c.t, { tau, heroScale: 6 }); grade(c, 'hell', { temperature: 0.15 }); c.post.flash = Math.max(0, 1 - c.lt / 0.4); c.shake(c.lt > 1.6 && c.lt < 3.5 ? 0.6 : 0.1);
     const g = c.use2D(); if (c.t > tBombs - 1.2) revealText(g, '× THOUSANDS', 960, 920, { family: FONT.title, size: 120, color: '#ffe2b0', p: c.t - tBombs + 1.2, tracking: 20, shadow: { color: 'rgba(0,0,0,0.6)', blur: 30 } }); });
   cue(gb.t0 - 0.3, 'nukeField', { gain: 0.9, dur: 4 });
-  S(gb.t0 - 0.3, (c) => { const n = c.use('nukes'); c.cam.fov = 50; const k = ease.inOutCubic(c.u); c.look(V(lerp(-4200, -2000, k), lerp(700, 3200, k), lerp(5200, 9000, k)), V(0, 600, -5000));
-    n.update(c.t, { tau: 4 + c.lt, field: true, fieldTau: c.lt * 1.1 + 0.3 }); grade(c, 'hell', { temperature: 0.15 }); c.shake(0.25); });
+  S(gb.t0 - 0.3, (c) => { const n = c.use('nukes'); c.cam.fov = 52; c.cam.near = 2; c.cam.far = 60000; const k = ease.inOutCubic(c.u); c.look(V(lerp(-4200, -2500, k), lerp(900, 4200, k), lerp(5200, 12000, k)), V(0, 900, -5000));
+    n.update(c.t, { tau: 4 + c.lt, heroScale: 6, field: true, fieldTau: c.lt * 1.1 + 0.3 }); grade(c, 'hell', { temperature: 0.15 }); c.shake(0.25); });
   // P wave / S wave
   const tFirst = T('the first faster wave');
   cue(tFirst, 'bed', { type: 'quake', dur: 95, gain: 0.8 });
@@ -104,9 +104,9 @@ export function act5(D) {
     const g = c.use2D(); INFO.tag(g, c.lt - 0.3, 1560, 160, 'S-WAVE', { size: 44, bg: 'rgba(210,90,20,0.8)' }); grade(c, 'neutral'); });
   S(tDev, (c) => { orbit(c, V(0, 0, 0), 120, 70, 0.9, 1.05); c.cam.fov = 40; city(c, { ...QN, quake: Q(c), focus: [0, 0, 100] }); c.shake(0.9); grade(c, 'night'); });
   S(T('the ground lurches'), (c) => { c.cam.fov = 40; c.look(V(30, 1.8, 22), V(-10, 4, 22)); c.cam.position.x += Math.sin(c.t * 7) * 0.6; city(c, { ...QN, quake: Q(c), alarmCar: true, focus: [10, 22, 40] }); c.shake(2.0, 6); grade(c, 'night'); });
-  S(T('pavement and soil ripple'), (c) => { c.cam.fov = 44; c.look(V(-6 + c.u * 4, 2.2, 52), V(-6, 0, 20)); city(c, { ...QN, quake: Q(c), ripple: 0.55, focus: [-6, 30, 40] }); c.shake(1.0, 6); grade(c, 'night'); });
+  S(T('pavement and soil ripple'), (c) => { c.cam.fov = 44; c.look(V(22.5, 2.6, 78 - c.u * 4), V(22, 0, 28)); city(c, { ...QN, quake: Q(c), ripple: 0.55, focus: [-6, 30, 40] }); c.shake(1.0, 6); grade(c, 'night'); });
   S(T('concrete apartment buildings never designed'), (c) => { c.cam.fov = 30; c.look(V(-2, 0.6, 30), V(-18, 30, -10)); city(c, { ...QN, quake: Q(c), focus: [-10, 0, 60] }); c.shake(0.8); grade(c, 'night'); });
-  S(T('the motion builds'), (c) => { c.cam.fov = 34; c.look(V(14, 6, 34), V(-6, 14, 6)); city(c, { ...QN, quake: Q(c), focus: [-6, 6, 40] }); c.shake(1.0); grade(c, 'night'); });
+  S(T('the motion builds'), (c) => { c.cam.fov = 34; c.look(V(23, 7, 24), V(-6.5, 14, 6.5)); city(c, { ...QN, quake: Q(c), focus: [-6, 6, 40] }); c.shake(1.0); grade(c, 'night'); });
   cue(T('where support columns have been removed'), 'glass', { gain: 0.6 });
   S(T('where support columns have been removed'), (c) => { c.cam.fov = 34; c.look(V(-2, 1.4, 19), V(-6.5, 1.6, 12)); city(c, { ...QN, quake: Q(c), colsRemoved: 3, colGhost: 0.8 + 0.2 * Math.sin(c.t * 20), focus: [-6, 10, 30] }); c.shake(1.2, 8); grade(c, 'night', { saturation: 1.1 }); });
   cue(tBuckle, 'collapse', { gain: 1.0 });
@@ -125,9 +125,9 @@ export function act5(D) {
   S(T('violent shaking causes'), (c) => { const s = c.sets.city; const tb = s.buildings.find((b) => b.fate === 'tip') || s.hero; const p = tb.position; s.mud.position.set(p.x, 0.2, p.z); s.mud.scale.setScalar(1);
     c.cam.fov = 30; c.look(V(p.x + 9, 1.2, p.z + 12), V(p.x + 2, 0.2, p.z + 6)); city(c, { ...QN, quake: Q(c), mud: true, focus: [p.x, p.z, 30] }); c.shake(1.0, 7); grade(c, 'night'); dof(c, 9, 0.5); });
   cue(tTip + 2.5, 'thud', { gain: 1.0 });
-  S(tTip, (c) => { const s = c.sets.city; const tb = s.buildings.find((b) => b.fate === 'tip') || s.hero; const p = tb.position; s.mud.position.set(p.x, 0.2, p.z);
+  S(tTip, (c) => { const s = c.sets.city; const tb = s.buildings.find((b) => b.fate === 'tip') || s.hero; const p = tb.position; s.mud.position.set(p.x, 0.2, p.z); s.mud.scale.setScalar(1);
     c.cam.fov = 40; c.look(V(p.x - 40 * tb.tipDir, 8, p.z + 40), V(p.x + 6 * tb.tipDir, 8, p.z)); city(c, { ...QN, quake: Q(c), mud: true, focus: [p.x, p.z, 50] }); c.shake(0.7); grade(c, 'night'); });
-  S(tSink, (c) => { const s = c.sets.city; const sb = s.buildings.find((b) => b.fate === 'sink') || s.hero; const p = sb.position; s.mud.position.set(p.x, 0.2, p.z);
+  S(tSink, (c) => { const s = c.sets.city; const sb = s.buildings.find((b) => b.fate === 'sink') || s.hero; const p = sb.position; s.mud.position.set(p.x, 0.2, p.z); s.mud.scale.setScalar(1);
     c.cam.fov = 36; c.look(V(p.x + 22, 4, p.z + 26), V(p.x, 6, p.z)); city(c, { ...QN, quake: Q(c), mud: true, focus: [p.x, p.z, 50] }); c.shake(0.7); grade(c, 'night'); });
   // Syria
   const SQ0 = tSyr - 1.5; const samp = (t) => quakeAmp(t, SQ0, { rise: 1.5, hold: 30, decay: 8, peak: 1 });
@@ -136,7 +136,7 @@ export function act5(D) {
   cue(T('buildings weakened by years'), 'collapse', { gain: 0.9 });
   S(T('buildings weakened by years'), (c) => { c.cam.fov = 38; c.look(V(30, 6, 40), V(0, 6, -5)); const s = c.use('syria'); s.update(c.t, { camera: c.cam, area: 'aleppo', mood: 'stormNight', quake: { t0: SQ0, amp: samp }, megaDust: c.lt + 0.5 }); c.shake(0.9); grade(c, 'night', { temperature: 0.25, saturation: 0.8 }); });
   S(tLasts, (c) => { const m = c.use('macro'); c.cam.fov = 30; c.look(V(2, 4, 6), V(0, 2.3, 0)); m.update(c.t, { prop: 'seismo', amp: 1.0, key: 250 }); c.shake(0.5);
-    const g = c.use2D(); const secs = Math.min(80, Math.floor(18 + c.lt * 22)); INFO.tag(g, c.lt, 1640, 140, `0:${String(Math.floor(secs / 60))}${secs >= 60 ? ':' + String(secs % 60).padStart(2, '0') : String(secs).padStart(2, '0')}`.replace('0:0:', '1:'), { size: 64, family: FONT.mono, weight: '700', bg: 'rgba(170,20,10,0.8)' }); grade(c, 'macro'); });
+    const g = c.use2D(); const secs = Math.min(80, Math.floor(18 + c.lt * 22)); INFO.tag(g, c.lt, 1640, 140, `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`, { size: 64, family: FONT.mono, weight: '700', bg: 'rgba(170,20,10,0.8)' }); grade(c, 'macro'); });
   cue(T('in those long seconds'), 'music', { mood: 'elegy', dur: 14 });
   S(T('in those long seconds'), (c) => { orbit(c, V(0, 0, 0), 220, 110, 3.9, 4.05); c.cam.fov = 40; city(c, { ...QN, quake: Q(c), haze: smooth(c.lt / 2) * 0.8, hazeColor: [0.35, 0.33, 0.3], focus: [0, 0, 160] }); c.shake(0.5); grade(c, 'night'); });
   const gd = gapTime('dust');

@@ -50,7 +50,7 @@ export class InteriorSet {
   constructor() { this.scene = new THREE.Scene(); }
   build(director) {
     const s = this.scene; s.background = new THREE.Color(0x020203);
-    s.add(new THREE.HemisphereLight(0x405070, 0x1a120c, 0.25));
+    s.add(new THREE.HemisphereLight(0x5a6c90, 0x2a1c12, 0.55));
     this.rooms = {}; this.lights = []; this.swing = [];
     this.crackU = { crack: { value: 0 } };
     const crackTex = canvasTex(1024, 512, (g, w, h) => { g.clearRect(0, 0, w, h); const r = new RNG(5); g.strokeStyle = 'rgba(40,30,25,0.9)'; g.lineCap = 'round';
@@ -112,8 +112,10 @@ export class InteriorSet {
     const pend = new THREE.Group(); pend.position.set(1.7, 2.8, 0.3); L.add(pend);
     pend.add(box(0.01, 0.7, 0.01, mat('#222'), 0, -0.35, 0)); const shade = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.3, 24, 1, true), mat('#e8c27a', { rough: 0.6, side: THREE.DoubleSide })); shade.position.y = -0.8; pend.add(shade);
     const bulb = sph(0.08, new THREE.MeshBasicMaterial({ color: new THREE.Color(5, 3.8, 2.4) }), 0, -0.86, 0); pend.add(bulb);
-    const pl = new THREE.PointLight(0xffc27a, 9, 12, 1.6); pl.position.y = -0.9; pl.castShadow = true; pl.shadow.mapSize.set(1024, 1024); pl.shadow.bias = -0.002; pend.add(pl);
-    this.lights.push({ light: pl, bulb, base: 9, room: 'living' }); this.swing.push(pend);
+    const pl = new THREE.PointLight(0xffc27a, 14, 12, 1.4); pl.position.y = -0.9; pl.castShadow = true; pl.shadow.mapSize.set(1024, 1024); pl.shadow.bias = -0.002; pend.add(pl);
+    this.lights.push({ light: pl, bulb, base: 14, room: 'living' }); this.swing.push(pend);
+    const fl2 = new THREE.PointLight(0xffb070, 5, 7, 1.6); fl2.position.set(-3.0, 1.6, 2.4); L.add(fl2); this.lights.push({ light: fl2, base: 5, room: 'living' });
+    L.add(cyl(0.03, 0.03, 1.6, mat('#2a2a2a'), -3.0, 0.8, 2.4, 6)); const lshade = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.35, 20, 1, true), mat('#f1dcb2', { side: THREE.DoubleSide, emissive: '#ffb070', ei: 0.6 })); lshade.position.set(-3.0, 1.75, 2.4); L.add(lshade);
     // floor lamp + heater (soba) glow
     const heater = new THREE.Group(); heater.position.set(3.0, 0, -2.4); L.add(heater); heater.add(rbox(0.9, 0.6, 0.15, 0.04, mat('#f2f2ee'), 0, 0.5, 0));
     for (let i = 0; i < 6; i++) heater.add(box(0.1, 0.5, 0.02, new THREE.MeshBasicMaterial({ color: new THREE.Color(3, 0.9, 0.2) }), -0.3 + i * 0.12, 0.5, 0.08));
@@ -146,7 +148,7 @@ export class InteriorSet {
     tub.add(box(1.75, 0.04, 0.6, mat('#bcd3dc', { rough: 0.1 }), 0, 0.9, 0));
     for (const [x, z] of [[-0.6, -0.22], [0.6, -0.22], [-0.6, 0.22], [0.6, 0.22]]) tub.add(cyl(0.05, 0.03, 0.3, mat('#c9a646', { metal: 0.9, rough: 0.3 }), x, 0.15, z, 8));
     this.cat = makeCat('#d98a3a'); B.add(this.cat); this.cat.position.set(-0.5, 0, -0.55);
-    const bl = new THREE.PointLight(0xdff0ff, 3, 6, 2); bl.position.set(0, 2.4, 0); B.add(bl); this.lights.push({ light: bl, base: 3, room: 'bath' });
+    const bl = new THREE.PointLight(0xdff0ff, 6, 7, 1.6); bl.position.set(0, 2.4, 0.4); B.add(bl); this.lights.push({ light: bl, base: 6, room: 'bath' });
     this.cat2 = makeCat('#3a3a3a'); L.add(this.cat2); this.cat2.visible = false;
 
     // ---------- bedroom (4:17 jolt) ----------
@@ -163,7 +165,7 @@ export class InteriorSet {
     const cl = new THREE.PointLight(0xff3020, 0.5, 2, 2); cl.position.set(1.3, 0.75, -0.4); BR.add(cl);
     const moon = new THREE.SpotLight(0x8fa8e0, 6, 12, 0.5, 0.8, 1.2); moon.position.set(1.25, 2.2, -2.5); moon.target.position.set(0, 0, 0.5); BR.add(moon); BR.add(moon.target); this.lights.push({ light: moon, base: 6, room: 'bed', noFlicker: true });
     // falling dust from ceilings
-    this.dustFall = new Sprites(160, (i, r) => ({ pos: [(r.next() - 0.5) * 6, 2.7, (r.next() - 0.5) * 5], vel: [0, -0.5, 0], birth: r.next() * 6, life: 3 + r.next() * 2, size0: 0.05, size1: 0.6, color: [0.85, 0.8, 0.72], alpha: 0.6 }), { gravity: [0, -0.6, 0], drag: 0.8, fadeIn: 0.1, fadeOut: 0.5, seed: 4, opacity: 0.7 });
+    this.dustFall = new Sprites(160, (i, r) => ({ pos: [(r.next() - 0.5) * 6, 2.7, (r.next() - 0.5) * 5], vel: [0, -0.5, 0], birth: r.next() * 6, life: 3 + r.next() * 2, size0: 0.03, size1: 0.22, color: [0.55, 0.52, 0.48], alpha: 0.5 }), { gravity: [0, -0.6, 0], drag: 0.8, fadeIn: 0.1, fadeOut: 0.5, seed: 4, opacity: 0.45 });
     s.add(this.dustFall);
     this.glass = sparkBurst({ count: 90, center: [0, 1.5, -2.9], speed: 3, seed: 6, color: [0.8, 0.9, 1.0], life: [0.5, 1.2], size: 0.03, floorY: 0.02 }); s.add(this.glass);
     this.rooms.living.add(new THREE.AmbientLight(0x000000, 0));
@@ -201,6 +203,7 @@ export class InteriorSet {
     this.crackU.crack.value = o.crack || 0;
     this.drawTV(t, power < 0.2 ? 'off' : o.tv || 'news'); this.tvLight.intensity = power > 0.2 ? 2.5 * (0.8 + 0.2 * noise1(t * 6)) : 0; this.tvScreen.visible = true;
     const famPose = o.family || 'tea';
+    this.family.forEach((p) => (p.visible = true)); // shots may hide them after update()
     this.family.forEach((p) => p.pose(famPose === 'tea' ? 'tea' : famPose, t));
     if (o.kid === 'sleep') { this.kid.pose('lie', t); this.kid.rotation.x = 0; } else this.kid.pose('lie', t);
     this.parent.visible = o.parentVisible !== false; this.parent.pose(o.parentPose || 'stand', t, { look: 0.4 });

@@ -35,7 +35,7 @@ const GRADES = {
   dust: { saturation: 0.82, contrast: 1.05, temperature: 0.15, tint: 0.02, lift: [0.02, 0.018, 0.012], gain: [1.0, 0.98, 0.93], vignette: 0.55, bloomStrength: 0.5 },
   grey: { saturation: 0.78, contrast: 1.08, temperature: -0.05, tint: 0, lift: [0.01, 0.012, 0.016], vignette: 0.55, bloomStrength: 0.45 },
   space: { saturation: 1.15, contrast: 1.12, temperature: -0.05, tint: 0, vignette: 0.6, bloomStrength: 0.9, bloomThreshold: 0.85 },
-  hell: { saturation: 1.25, contrast: 1.15, temperature: 0.25, tint: 0.04, vignette: 0.6, bloomStrength: 1.0, bloomThreshold: 0.9 },
+  hell: { saturation: 1.2, contrast: 1.15, temperature: 0.2, tint: 0.04, vignette: 0.6, bloomStrength: 0.6, bloomThreshold: 1.1, exposure: 0.85 },
   macro: { saturation: 1.15, contrast: 1.14, temperature: 0.2, tint: 0.02, vignette: 0.65, bloomStrength: 0.6 },
   map: { saturation: 1.12, contrast: 1.08, temperature: 0.05, tint: 0, vignette: 0.45, bloomStrength: 0.6 },
   blood: { saturation: 1.1, contrast: 1.18, temperature: 0.3, tint: 0.05, lift: [0.02, 0.0, 0.0], vignette: 0.65, bloomStrength: 0.8 },

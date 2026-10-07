@@ -54,7 +54,7 @@ function patchMaterial(m, u, { heat = true } = {}) {
       .replace('#include <map_fragment>', `#include <map_fragment>
         ${heat ? `if(uHeat > 0.0){ float s = clamp(vStrain * 0.9, 0.0, 1.0); vec3 hc = mix(vec3(0.1,0.25,0.9), vec3(1.0,0.85,0.1), smoothstep(0.0,0.5,s)); hc = mix(hc, vec3(1.0,0.12,0.05), smoothstep(0.5,1.0,s));
           float pulse = 0.85 + 0.15*sin(uTime*4.0 - abs(vBP.z)*0.8);
-          diffuseColor.rgb = mix(diffuseColor.rgb, hc * pulse, uHeat * 0.7); }` : ''}`);
+          diffuseColor.rgb = mix(diffuseColor.rgb, hc * pulse, uHeat * 0.7 * smoothstep(-1.2, -0.2, vBP.y)); }` : ''}`);
   };
   return m;
 }
@@ -140,7 +140,7 @@ export class GeoBlockSet {
         float fbm(vec2 p){ float s=0.0,a=0.5; for(int i=0;i<5;i++){ s+=a*n2(p); p*=2.03; a*=0.5;} return s; }
         void main(){
           vec2 p = vP.xy; // x along fault, y depth (0 top .. -18)
-          vec3 base = texture2D(rock, vUv * vec2(2.0, 1.2)).rgb * 0.45;
+          vec3 base = texture2D(rock, vUv * vec2(2.0, 1.2)).rgb * 0.32;
           float rough = fbm(p * 2.5) * 0.6 + fbm(p * 9.0) * 0.4;
           base *= 0.55 + rough * 0.8;
           base += vec3(0.06) * smoothstep(0.6, 1.0, n2(vec2(p.x * 0.5, p.y * 7.0))); // slickensides
@@ -149,19 +149,19 @@ export class GeoBlockSet {
           float R = uLocked * 16.0;
           float locked = smoothstep(R + 0.6, R - 0.6, d);
           float bumps = fbm(p * 3.0 + 3.0);
-          vec3 lockedRock = vec3(0.62, 0.48, 0.36) * (0.55 + bumps * 0.7);
+          vec3 lockedRock = vec3(0.42, 0.32, 0.25) * (0.55 + bumps * 0.7);
           float pulse = 0.75 + 0.25 * sin(uTime * 4.0 - d * 0.7);
-          vec3 hot = mix(vec3(1.4, 0.75, 0.15), vec3(1.6, 0.18, 0.04), uStress) * (0.3 + 0.9 * uStress) * pulse * smoothstep(0.35, 0.85, bumps + 0.2);
+          vec3 hot = mix(vec3(1.1, 0.55, 0.1), vec3(1.2, 0.12, 0.03), uStress) * (0.2 + 0.6 * uStress) * pulse * smoothstep(0.45, 0.9, bumps + 0.15);
           vec3 c = mix(base * 0.8, lockedRock + hot, locked);
           float rim = smoothstep(1.0, 0.0, abs(d - R)) * step(0.01, uLocked);
-          c += vec3(3.0, 1.1, 0.3) * rim * (0.5 + uStress);
+          c += vec3(2.0, 0.7, 0.18) * rim * (0.5 + uStress);
           // micro-cracks
           vec4 cr = texture2D(crackMap, vUv);
           float crk = step(cr.r, uCrack) * cr.a;
-          c = mix(c, vec3(3.5, 2.0, 0.8), crk);
+          c = mix(c, vec3(1.8, 0.75, 0.18), crk * 0.9);
           // frictional melt (glowing lubricant film)
           float m = uMelt * smoothstep(R + 6.0 * uMelt, 0.0, d) ;
-          vec3 lava = mix(vec3(1.6, 0.25, 0.03), vec3(4.0, 2.6, 0.9), fbm(p * 1.3 + vec2(0.0, uTime * 0.6)));
+          vec3 lava = mix(vec3(1.1, 0.16, 0.02), vec3(2.6, 1.3, 0.35), fbm(p * 1.3 + vec2(0.0, uTime * 0.6)));
           c = mix(c, lava, clamp(m, 0.0, 1.0));
           gl_FragColor = vec4(c, 1.0);
         }`,
@@ -200,6 +200,9 @@ export class GeoBlockSet {
     this.hypoGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: new THREE.Color(5, 2.5, 1), blending: THREE.AdditiveBlending, depthTest: false, transparent: true })); this.hypoGlow.position.set(0, -12, 0); s.add(this.hypoGlow);
     this.dust = dustBurst({ count: 140, center: [0, 0, 0], radius: 18, height: 2, speed: 5, spread: 1.2, life: [4, 9], size: [2, 9], color: [0.62, 0.55, 0.45], seed: 8, opacity: 0.7 }); s.add(this.dust);
     this.sparks = sparkBurst({ count: 160, center: [0, -10, 0.5], speed: 9, seed: 12 }); s.add(this.sparks);
+    // dust curtain erupting along the whole surface trace of the fault
+    this.traceDust = new Sprites(220, (i, r) => { const x = (r.next() - 0.5) * LX * 0.95; return { pos: [x, 0.1, (r.next() - 0.5) * 0.6], vel: [(r.next() - 0.5) * 1.5, 2 + r.next() * 5, (r.next() - 0.5) * 3], birth: Math.abs(x) / 22 * 0.6 + r.next() * 0.3, life: 3 + r.next() * 4, size0: 0.8, size1: 4 + r.next() * 5, color: [0.62, 0.53, 0.42], alpha: 0.8 }; }, { seed: 33, drag: 0.9, gravity: [0, -0.3, 0], fadeIn: 0.05, fadeOut: 0.6, opacity: 0.85 });
+    this.traceDust.visible = false; s.add(this.traceDust);
     // teeth (velcro) prop
     this.teeth = this.makeTeeth(); s.add(this.teeth);
   }
@@ -219,7 +222,7 @@ export class GeoBlockSet {
     };
     for (let k = 0; k < 22; k++) grow(ox + (r.next() - 0.5) * 40, oy + (r.next() - 0.5) * 30, r.next() * TAU, 70 + r.next() * 50, 0, r.next() * 0.25);
     segs.sort((a, b) => b[4] - a[4]);
-    for (const [x1, y1, x2, y2, b, wdt] of segs) { const v = Math.round(clamp(b) * 255); g.strokeStyle = `rgba(${v},0,0,1)`; g.lineWidth = Math.max(1, wdt); g.lineCap = 'round'; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); }
+    for (const [x1, y1, x2, y2, b, wdt] of segs) { const v = Math.round(clamp(b) * 255); g.strokeStyle = `rgba(${v},0,0,1)`; g.lineWidth = Math.max(0.8, wdt * 0.45); g.lineCap = 'round'; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); }
     const t = new THREE.CanvasTexture(c); t.minFilter = THREE.LinearFilter; return t;
   }
   makeTeeth() {
@@ -288,6 +291,7 @@ export class GeoBlockSet {
     }
     this.dust.visible = o.dust !== undefined; if (this.dust.visible) this.dust.setTime(o.dust);
     this.sparks.visible = o.sparks !== undefined; if (this.sparks.visible) this.sparks.setTime(o.sparks);
+    this.traceDust.visible = o.traceDust !== undefined && !o.teethOnly; if (this.traceDust.visible) this.traceDust.setTime(o.traceDust);
     // spring
     const sp = o.spring;
     this.spring.visible = this.springA.visible = this.springB.visible = !!sp && !o.teethOnly;

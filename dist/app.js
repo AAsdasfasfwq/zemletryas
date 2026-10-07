@@ -25129,6 +25129,7 @@ void main(){
       this.spin.add(this.coreLight);
       this.sat = new Group();
       this.sat.visible = false;
+      this.sat.scale.setScalar(1.8);
       this.root.add(this.sat);
       const gold = new MeshStandardMaterial({ color: 13215302, metalness: 1, roughness: 0.3 });
       const panelM = new MeshStandardMaterial({ color: 1915503, metalness: 0.6, roughness: 0.25, emissive: new Color(0.02, 0.05, 0.12) });
@@ -25331,6 +25332,10 @@ void main(){
       super(new SphereGeometry(4e3, 48, 24), m);
       this.frustumCulled = false;
       this.renderOrder = -100;
+      this.onBeforeRender = (r, sc, cam) => {
+        this.position.copy(cam.position);
+        this.updateMatrixWorld();
+      };
       this.setPreset(preset);
     }
     setPreset(name, overrides = {}) {
@@ -28972,7 +28977,7 @@ vec3 waves(vec3 p){
       sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nuniform float uHeat, uTime; varying vec3 vBP; varying float vStrain;").replace("#include <map_fragment>", `#include <map_fragment>
         ${heat ? `if(uHeat > 0.0){ float s = clamp(vStrain * 0.9, 0.0, 1.0); vec3 hc = mix(vec3(0.1,0.25,0.9), vec3(1.0,0.85,0.1), smoothstep(0.0,0.5,s)); hc = mix(hc, vec3(1.0,0.12,0.05), smoothstep(0.5,1.0,s));
           float pulse = 0.85 + 0.15*sin(uTime*4.0 - abs(vBP.z)*0.8);
-          diffuseColor.rgb = mix(diffuseColor.rgb, hc * pulse, uHeat * 0.7); }` : ""}`);
+          diffuseColor.rgb = mix(diffuseColor.rgb, hc * pulse, uHeat * 0.7 * smoothstep(-1.2, -0.2, vBP.y)); }` : ""}`);
     };
     return m;
   }
@@ -29116,7 +29121,7 @@ vec3 waves(vec3 p){
         float fbm(vec2 p){ float s=0.0,a=0.5; for(int i=0;i<5;i++){ s+=a*n2(p); p*=2.03; a*=0.5;} return s; }
         void main(){
           vec2 p = vP.xy; // x along fault, y depth (0 top .. -18)
-          vec3 base = texture2D(rock, vUv * vec2(2.0, 1.2)).rgb * 0.45;
+          vec3 base = texture2D(rock, vUv * vec2(2.0, 1.2)).rgb * 0.32;
           float rough = fbm(p * 2.5) * 0.6 + fbm(p * 9.0) * 0.4;
           base *= 0.55 + rough * 0.8;
           base += vec3(0.06) * smoothstep(0.6, 1.0, n2(vec2(p.x * 0.5, p.y * 7.0))); // slickensides
@@ -29125,19 +29130,19 @@ vec3 waves(vec3 p){
           float R = uLocked * 16.0;
           float locked = smoothstep(R + 0.6, R - 0.6, d);
           float bumps = fbm(p * 3.0 + 3.0);
-          vec3 lockedRock = vec3(0.62, 0.48, 0.36) * (0.55 + bumps * 0.7);
+          vec3 lockedRock = vec3(0.42, 0.32, 0.25) * (0.55 + bumps * 0.7);
           float pulse = 0.75 + 0.25 * sin(uTime * 4.0 - d * 0.7);
-          vec3 hot = mix(vec3(1.4, 0.75, 0.15), vec3(1.6, 0.18, 0.04), uStress) * (0.3 + 0.9 * uStress) * pulse * smoothstep(0.35, 0.85, bumps + 0.2);
+          vec3 hot = mix(vec3(1.1, 0.55, 0.1), vec3(1.2, 0.12, 0.03), uStress) * (0.2 + 0.6 * uStress) * pulse * smoothstep(0.45, 0.9, bumps + 0.15);
           vec3 c = mix(base * 0.8, lockedRock + hot, locked);
           float rim = smoothstep(1.0, 0.0, abs(d - R)) * step(0.01, uLocked);
-          c += vec3(3.0, 1.1, 0.3) * rim * (0.5 + uStress);
+          c += vec3(2.0, 0.7, 0.18) * rim * (0.5 + uStress);
           // micro-cracks
           vec4 cr = texture2D(crackMap, vUv);
           float crk = step(cr.r, uCrack) * cr.a;
-          c = mix(c, vec3(3.5, 2.0, 0.8), crk);
+          c = mix(c, vec3(1.8, 0.75, 0.18), crk * 0.9);
           // frictional melt (glowing lubricant film)
           float m = uMelt * smoothstep(R + 6.0 * uMelt, 0.0, d) ;
-          vec3 lava = mix(vec3(1.6, 0.25, 0.03), vec3(4.0, 2.6, 0.9), fbm(p * 1.3 + vec2(0.0, uTime * 0.6)));
+          vec3 lava = mix(vec3(1.1, 0.16, 0.02), vec3(2.6, 1.3, 0.35), fbm(p * 1.3 + vec2(0.0, uTime * 0.6)));
           c = mix(c, lava, clamp(m, 0.0, 1.0));
           gl_FragColor = vec4(c, 1.0);
         }`
@@ -29218,6 +29223,12 @@ vec3 waves(vec3 p){
       s.add(this.dust);
       this.sparks = sparkBurst({ count: 160, center: [0, -10, 0.5], speed: 9, seed: 12 });
       s.add(this.sparks);
+      this.traceDust = new Sprites(220, (i, r) => {
+        const x = (r.next() - 0.5) * LX * 0.95;
+        return { pos: [x, 0.1, (r.next() - 0.5) * 0.6], vel: [(r.next() - 0.5) * 1.5, 2 + r.next() * 5, (r.next() - 0.5) * 3], birth: Math.abs(x) / 22 * 0.6 + r.next() * 0.3, life: 3 + r.next() * 4, size0: 0.8, size1: 4 + r.next() * 5, color: [0.62, 0.53, 0.42], alpha: 0.8 };
+      }, { seed: 33, drag: 0.9, gravity: [0, -0.3, 0], fadeIn: 0.05, fadeOut: 0.6, opacity: 0.85 });
+      this.traceDust.visible = false;
+      s.add(this.traceDust);
       this.teeth = this.makeTeeth();
       s.add(this.teeth);
     }
@@ -29248,7 +29259,7 @@ vec3 waves(vec3 p){
       for (const [x1, y1, x2, y2, b, wdt] of segs) {
         const v = Math.round(clamp2(b) * 255);
         g.strokeStyle = `rgba(${v},0,0,1)`;
-        g.lineWidth = Math.max(1, wdt);
+        g.lineWidth = Math.max(0.8, wdt * 0.45);
         g.lineCap = "round";
         g.beginPath();
         g.moveTo(x1, y1);
@@ -29395,6 +29406,8 @@ vec3 waves(vec3 p){
       if (this.dust.visible) this.dust.setTime(o.dust);
       this.sparks.visible = o.sparks !== void 0;
       if (this.sparks.visible) this.sparks.setTime(o.sparks);
+      this.traceDust.visible = o.traceDust !== void 0 && !o.teethOnly;
+      if (this.traceDust.visible) this.traceDust.setTime(o.traceDust);
       const sp = o.spring;
       this.spring.visible = this.springA.visible = this.springB.visible = !!sp && !o.teethOnly;
       if (sp) {
@@ -30328,7 +30341,7 @@ vec3 waves(vec3 p){
     build(director2) {
       const s = this.scene;
       s.background = new Color(131587);
-      s.add(new HemisphereLight(4214896, 1708556, 0.25));
+      s.add(new HemisphereLight(5926032, 2759698, 0.55));
       this.rooms = {};
       this.lights = [];
       this.swing = [];
@@ -30481,14 +30494,22 @@ vec3 waves(vec3 p){
       pend.add(shade);
       const bulb = sph(0.08, new MeshBasicMaterial({ color: new Color(5, 3.8, 2.4) }), 0, -0.86, 0);
       pend.add(bulb);
-      const pl = new PointLight(16761466, 9, 12, 1.6);
+      const pl = new PointLight(16761466, 14, 12, 1.4);
       pl.position.y = -0.9;
       pl.castShadow = true;
       pl.shadow.mapSize.set(1024, 1024);
       pl.shadow.bias = -2e-3;
       pend.add(pl);
-      this.lights.push({ light: pl, bulb, base: 9, room: "living" });
+      this.lights.push({ light: pl, bulb, base: 14, room: "living" });
       this.swing.push(pend);
+      const fl2 = new PointLight(16756848, 5, 7, 1.6);
+      fl2.position.set(-3, 1.6, 2.4);
+      L2.add(fl2);
+      this.lights.push({ light: fl2, base: 5, room: "living" });
+      L2.add(cyl(0.03, 0.03, 1.6, mat("#2a2a2a"), -3, 0.8, 2.4, 6));
+      const lshade = new Mesh(new ConeGeometry(0.25, 0.35, 20, 1, true), mat("#f1dcb2", { side: DoubleSide, emissive: "#ffb070", ei: 0.6 }));
+      lshade.position.set(-3, 1.75, 2.4);
+      L2.add(lshade);
       const heater = new Group();
       heater.position.set(3, 0, -2.4);
       L2.add(heater);
@@ -30576,10 +30597,10 @@ vec3 waves(vec3 p){
       this.cat = makeCat("#d98a3a");
       B.add(this.cat);
       this.cat.position.set(-0.5, 0, -0.55);
-      const bl = new PointLight(14676223, 3, 6, 2);
-      bl.position.set(0, 2.4, 0);
+      const bl = new PointLight(14676223, 6, 7, 1.6);
+      bl.position.set(0, 2.4, 0.4);
       B.add(bl);
-      this.lights.push({ light: bl, base: 3, room: "bath" });
+      this.lights.push({ light: bl, base: 6, room: "bath" });
       this.cat2 = makeCat("#3a3a3a");
       L2.add(this.cat2);
       this.cat2.visible = false;
@@ -30619,7 +30640,7 @@ vec3 waves(vec3 p){
       BR.add(moon);
       BR.add(moon.target);
       this.lights.push({ light: moon, base: 6, room: "bed", noFlicker: true });
-      this.dustFall = new Sprites(160, (i, r) => ({ pos: [(r.next() - 0.5) * 6, 2.7, (r.next() - 0.5) * 5], vel: [0, -0.5, 0], birth: r.next() * 6, life: 3 + r.next() * 2, size0: 0.05, size1: 0.6, color: [0.85, 0.8, 0.72], alpha: 0.6 }), { gravity: [0, -0.6, 0], drag: 0.8, fadeIn: 0.1, fadeOut: 0.5, seed: 4, opacity: 0.7 });
+      this.dustFall = new Sprites(160, (i, r) => ({ pos: [(r.next() - 0.5) * 6, 2.7, (r.next() - 0.5) * 5], vel: [0, -0.5, 0], birth: r.next() * 6, life: 3 + r.next() * 2, size0: 0.03, size1: 0.22, color: [0.55, 0.52, 0.48], alpha: 0.5 }), { gravity: [0, -0.6, 0], drag: 0.8, fadeIn: 0.1, fadeOut: 0.5, seed: 4, opacity: 0.45 });
       s.add(this.dustFall);
       this.glass = sparkBurst({ count: 90, center: [0, 1.5, -2.9], speed: 3, seed: 6, color: [0.8, 0.9, 1], life: [0.5, 1.2], size: 0.03, floorY: 0.02 });
       s.add(this.glass);
@@ -30740,6 +30761,7 @@ vec3 waves(vec3 p){
       this.tvLight.intensity = power > 0.2 ? 2.5 * (0.8 + 0.2 * noise1(t * 6)) : 0;
       this.tvScreen.visible = true;
       const famPose = o.family || "tea";
+      this.family.forEach((p) => p.visible = true);
       this.family.forEach((p) => p.pose(famPose === "tea" ? "tea" : famPose, t));
       if (o.kid === "sleep") {
         this.kid.pose("lie", t);
@@ -30943,7 +30965,7 @@ vec3 waves(vec3 p){
       this.camp = new Group();
       this.camp.position.set(300, 0, 0);
       s.add(this.camp);
-      const tentM = [mat("#e9e6dc", { rough: 0.95, side: DoubleSide }), mat("#d8dfe6", { rough: 0.95, side: DoubleSide }), mat("#c9d7e8", { rough: 0.95, side: DoubleSide })];
+      const tentM = [mat("#f2efe6", { rough: 0.95, side: DoubleSide }), mat("#5b8fc7", { rough: 0.9, side: DoubleSide }), mat("#c9d7e8", { rough: 0.95, side: DoubleSide })];
       const tentGeo = (() => {
         const g = new BufferGeometry();
         const w = 2.2, l = 4, h = 2.1;
@@ -31041,7 +31063,7 @@ vec3 waves(vec3 p){
       }
       this.snow = new Precip({ count: 8e3, box: [80, 40, 80], fall: 1.8, wind: [2, 0, 0.6], size: 0.11, color: [1, 1, 1], opacity: 0.9, seed: 21 });
       s.add(this.snow);
-      this.haze = dustBurst({ count: 120, center: [0, 0, 0], radius: 120, height: 25, speed: 0.2, spread: 0, life: [1e5, 1e5 + 1], size: [30, 70], color: [0.85, 0.75, 0.6], seed: 7, opacity: 0.3, rise: 0 });
+      this.haze = dustBurst({ count: 90, center: [0, 0, 0], radius: 140, height: 25, speed: 0.2, spread: 0, life: [1e5, 1e5 + 1], size: [30, 70], color: [0.85, 0.75, 0.6], seed: 7, opacity: 0.18, rise: 0 });
       this.haze.material.uniforms.uFadeIn.value = 0;
       this.haze.material.uniforms.uFadeOut.value = 0;
       s.add(this.haze);
@@ -31055,7 +31077,7 @@ vec3 waves(vec3 p){
         this.mood = mood;
         this.sky.setPreset(mood);
         this.scene.environment = this.envs[mood];
-        const P2 = { dusty: [16766880, 3.2, [0.6, 0.45, -0.5], 14272944, 6969928, 1, 13217930, 26e-4], winterDusk: [10465488, 0.7, [0.6, 0.1, -0.6], 6977688, 2763312, 1, 4870244, 4e-3], overcast: [14672874, 1.2, [0.3, 0.8, -0.3], 13159636, 6973023, 1.5, 10331050, 3e-3], stormNight: [5923976, 0.25, [-0.4, 0.6, 0.5], 1712176, 592140, 0.45, 790036, 4e-3] }[mood];
+        const P2 = { dusty: [16766880, 3.2, [0.6, 0.45, -0.5], 14272944, 6969928, 1, 13217930, 12e-4], winterDusk: [10465488, 0.7, [0.6, 0.1, -0.6], 6977688, 2763312, 1, 4870244, 25e-4], overcast: [14672874, 1.4, [0.3, 0.8, -0.3], 13159636, 6973023, 1.4, 10331050, 15e-4], stormNight: [5923976, 0.25, [-0.4, 0.6, 0.5], 1712176, 592140, 0.45, 790036, 4e-3] }[mood];
         this.sun.color.set(P2[0]);
         this.sun.intensity = P2[1];
         this.sunDir = new Vector3(...P2[2]).normalize();
@@ -31562,6 +31584,7 @@ void main(){
     update(t, o = {}) {
       const alarm = o.alarm || 0;
       this.motes.setTime(t);
+      this.desks.forEach((p) => p.visible = true);
       if (o.area !== "hall") {
         this.big.forEach((sc, i) => {
           if (i === 0) drawMapScreen(sc, t, { gap: alarm > 0.3 ? 1 : 0 });
@@ -32078,7 +32101,7 @@ void main(){
     dust: { saturation: 0.82, contrast: 1.05, temperature: 0.15, tint: 0.02, lift: [0.02, 0.018, 0.012], gain: [1, 0.98, 0.93], vignette: 0.55, bloomStrength: 0.5 },
     grey: { saturation: 0.78, contrast: 1.08, temperature: -0.05, tint: 0, lift: [0.01, 0.012, 0.016], vignette: 0.55, bloomStrength: 0.45 },
     space: { saturation: 1.15, contrast: 1.12, temperature: -0.05, tint: 0, vignette: 0.6, bloomStrength: 0.9, bloomThreshold: 0.85 },
-    hell: { saturation: 1.25, contrast: 1.15, temperature: 0.25, tint: 0.04, vignette: 0.6, bloomStrength: 1, bloomThreshold: 0.9 },
+    hell: { saturation: 1.2, contrast: 1.15, temperature: 0.2, tint: 0.04, vignette: 0.6, bloomStrength: 0.6, bloomThreshold: 1.1, exposure: 0.85 },
     macro: { saturation: 1.15, contrast: 1.14, temperature: 0.2, tint: 0.02, vignette: 0.65, bloomStrength: 0.6 },
     map: { saturation: 1.12, contrast: 1.08, temperature: 0.05, tint: 0, vignette: 0.45, bloomStrength: 0.6 },
     blood: { saturation: 1.1, contrast: 1.18, temperature: 0.3, tint: 0.05, lift: [0.02, 0, 0], vignette: 0.65, bloomStrength: 0.8 },
@@ -33284,8 +33307,8 @@ void main(){
       grade(c, "golden");
     });
     S(T("attractive apartment towers"), (c) => {
-      c.cam.fov = 30;
-      dolly(c, V(52, 2, -26), V(52, 6, -26), V(38, 6, -50), V(36, 62, -52));
+      c.cam.fov = 34;
+      dolly(c, V(78, 2, -4), V(76, 5, -6), V(48, 12, -40), V(46, 58, -42));
       city(c, { ...GOLD, focus: [40, -48, 50] });
       grade(c, "golden");
       c.post.bloomStrength = 0.9;
@@ -33754,7 +33777,7 @@ void main(){
       const m = c.use("macro");
       c.cam.fov = 30;
       dolly(c, V(4, 4.5, 7), V(2.5, 3.6, 5.5), V(0, 2.3, 0), V(0, 2.3, 0.5));
-      m.update(c.t, { prop: "seismo", amp: 0.08 + 0.12 * smooth(c.u * 1.5) });
+      m.update(c.t, { prop: "seismo", amp: 0.08 + 0.12 * smooth(c.u * 1.5), key: 140 });
       grade(c, "macro");
       dof(c, 6, 0.6);
     });
@@ -33912,7 +33935,7 @@ void main(){
       const r = c.use("room");
       c.cam.fov = 34;
       c.look(V(-3 + c.u * 0.5, 0.6, 3), V(-1, 0.5, 1));
-      r.update(c.t, { room: "living", tv: "off", power: 0.4, family: "sit", cat: "run", catT: -1 });
+      r.update(c.t, { room: "living", tv: "off", power: 0.7, family: "sit", cat: "run", catT: -1 });
       r.family.forEach((p) => p.visible = false);
       grade(c, "night", { temperature: 0.1 });
     });
@@ -33921,7 +33944,7 @@ void main(){
       const r = c.use("room");
       c.cam.fov = 40;
       c.look(V(-2 + c.u * 3, 0.35, 2.4), V(0.5 + c.u * 2, 0.2, 0.9));
-      r.update(c.t, { room: "living", tv: "off", power: 0.4, cat: "run", catT: c.lt * 1.1 });
+      r.update(c.t, { room: "living", tv: "off", power: 0.7, cat: "run", catT: c.lt * 1.1 });
       r.family.forEach((p) => p.visible = false);
       c.handheld(1.5, 1.5);
       grade(c, "night", { temperature: 0.1 });
@@ -33931,7 +33954,7 @@ void main(){
       const r = c.use("room");
       c.cam.fov = 34;
       c.look(V(24 + 0.8, 0.35, 1.2), V(24 - 0.5, 0.2, -0.55));
-      r.update(c.t, { room: "bath", catIn: smooth(c.lt / 2), power: 0.7 });
+      r.update(c.t, { room: "bath", catIn: smooth(c.lt / 2), power: 1 });
       grade(c, "cold", { saturation: 1 });
       dof(c, 1.9, 1);
     });
@@ -33939,14 +33962,22 @@ void main(){
     S(T("stray dogs gathered"), (c) => {
       c.cam.fov = 32;
       c.look(V(-44 + 2 + 7, 1.2, 44 + 2), V(-44 + 6.5, 0.8, 44 - 5));
-      city(c, { ...NIGHT_SNOW, windows: 0.2, dogs: true, focus: [-38, 40, 30] });
+      const s = city(c, { ...NIGHT_SNOW, windows: 0.2, dogs: true, focus: [-38, 40, 30] });
+      s.points[0].position.set(-37, 6, 42);
+      s.points[0].color.set(16756848);
+      s.points[0].distance = 30;
+      s.points[0].intensity = 260;
       grade(c, "night");
       dof(c, 8, 0.5);
     });
     S(T("howling into the darkness"), (c) => {
       c.cam.fov = 26;
       c.look(V(-44 + 4, 0.5, 44 - 2.5), V(-44 + 5.5, 1.1, 44 - 5));
-      city(c, { ...NIGHT_SNOW, windows: 0.2, dogs: true, focus: [-38, 40, 30] });
+      const s = city(c, { ...NIGHT_SNOW, windows: 0.2, dogs: true, focus: [-38, 40, 30] });
+      s.points[0].position.set(-37, 6, 42);
+      s.points[0].color.set(16756848);
+      s.points[0].distance = 30;
+      s.points[0].intensity = 260;
       grade(c, "night");
       dof(c, 3, 1);
     });
@@ -34054,7 +34085,7 @@ void main(){
       c.look(V(0.4, -11.7, 5.5 - c.u), V(0, -12, 0));
       b.update(c.t, { S: 14, hideSouth: true, locked: lerp2(0.05, 0, smooth(c.lt / 1.2)), stress: 1, glow: 0.9, crack: 1, melt: 0.7, sparks: c.lt - 0.3 });
       c.shake(0.3);
-      grade(c, "hell");
+      grade(c, "hell", { bloomStrength: 0.45 });
     });
     S(T("extreme pressure and friction"), (c) => {
       const b = c.use("block");
@@ -34158,7 +34189,7 @@ void main(){
       c.cam.fov = 40;
       const st = c.lt;
       c.look(V(-30 - st * 2, 16 - st, 46 - st * 3), V(0, -5, 0));
-      b.update(c.t, { S: 15, snap: Math.min(1, st * 2.2) + Math.sin(st * 25) * 0.08 * Math.exp(-st * 2), waveT: st * 0.9, pAmp: 1.2, sAmp: 1.4, heat: 1 - smooth(st / 1.5) * 0.6, trace: 1, hypo: 1.2, dust: st, sparks: st, glow: 1, collapseHouses: smooth((st - 0.6) / 0.8), shake: 1 });
+      b.update(c.t, { S: 15, snap: Math.min(1, st * 2.2) + Math.sin(st * 25) * 0.08 * Math.exp(-st * 2), waveT: st * 0.9, pAmp: 1.2, sAmp: 1.4, heat: 1 - smooth(st / 1.5) * 0.6, trace: 1, hypo: 1.2, dust: st, traceDust: st, sparks: st, glow: 1, collapseHouses: smooth((st - 0.6) / 0.8), shake: 1 });
       c.shake(1.6, 11);
       grade(c, "blood");
     });
@@ -34177,18 +34208,18 @@ void main(){
     cue(tCrack, "crack", { gain: 0.9 });
     S(tRock, (c) => {
       const b = c.use("block");
-      c.cam.fov = 34;
-      c.look(V(-8 + c.lt * 1.5, 3, 7), V(0, 0, 0));
+      c.cam.fov = 38;
+      c.look(V(-14 + c.lt * 2, 5, 12), V(2, 1, 0));
       const st = c.t - tCrack;
-      b.update(c.t, { S: 15, snap: st < 0 ? 0.5 : Math.min(1, 0.5 + st * 1.5) + Math.sin(st * 20) * 0.1 * Math.exp(-st * 2), trace: 1, glow: 0.6, dust: st > 0 ? st : void 0, sparks: st > 0 ? st : void 0, waveT: 1.5 + c.lt * 0.5, sAmp: 0.6, shake: 0.8 });
+      b.update(c.t, { S: 15, snap: st < 0 ? 0.5 : Math.min(1, 0.5 + st * 1.5) + Math.sin(st * 20) * 0.1 * Math.exp(-st * 2), trace: 1, glow: 0.6, traceDust: st > -0.4 ? st + 0.4 : void 0, sparks: st > 0 ? st : void 0, waveT: 1.5 + c.lt * 0.5, sAmp: 0.6, shake: 0.8 });
       c.shake(st > 0 && st < 0.6 ? 2 : 0.8, 12);
       grade(c, "blood");
       dof(c, 9, 0.5);
     });
     S(T("the underground seam gives way"), (c) => {
       const b = c.use("block");
-      c.cam.fov = 34;
-      c.look(V(-12 + c.u * 24, -9, 14), V(-6 + c.u * 24, -12, 0));
+      c.cam.fov = 40;
+      c.look(V(-16 + c.u * 20, -6, 26), V(-6 + c.u * 14, -11, 0));
       b.update(c.t, { S: 15, hideSouth: true, locked: 0, stress: 1, glow: 1.5, crack: 1, melt: 1, sparks: c.lt % 1.2 });
       c.shake(1);
       grade(c, "hell");
@@ -34223,10 +34254,12 @@ void main(){
     cue(tEnergy + 0.1, "nuke", { gain: 1 });
     S(tEnergy, (c) => {
       const n = c.use("nukes");
-      c.cam.fov = 38;
+      c.cam.fov = 40;
+      c.cam.near = 1;
+      c.cam.far = 6e4;
       const tau = c.lt * 0.9;
-      c.look(V(-2600 - c.lt * 60, 60 + c.lt * 10, 2600), V(0, 260 + tau * 70, 0));
-      n.update(c.t, { tau, heroScale: 1 });
+      c.look(V(-2300 - c.lt * 80, 40 + c.lt * 10, 2300), V(0, 500 + tau * 260, 0));
+      n.update(c.t, { tau, heroScale: 6 });
       grade(c, "hell", { temperature: 0.15 });
       c.post.flash = Math.max(0, 1 - c.lt / 0.4);
       c.shake(c.lt > 1.6 && c.lt < 3.5 ? 0.6 : 0.1);
@@ -34236,10 +34269,12 @@ void main(){
     cue(gb.t0 - 0.3, "nukeField", { gain: 0.9, dur: 4 });
     S(gb.t0 - 0.3, (c) => {
       const n = c.use("nukes");
-      c.cam.fov = 50;
+      c.cam.fov = 52;
+      c.cam.near = 2;
+      c.cam.far = 6e4;
       const k = ease.inOutCubic(c.u);
-      c.look(V(lerp2(-4200, -2e3, k), lerp2(700, 3200, k), lerp2(5200, 9e3, k)), V(0, 600, -5e3));
-      n.update(c.t, { tau: 4 + c.lt, field: true, fieldTau: c.lt * 1.1 + 0.3 });
+      c.look(V(lerp2(-4200, -2500, k), lerp2(900, 4200, k), lerp2(5200, 12e3, k)), V(0, 900, -5e3));
+      n.update(c.t, { tau: 4 + c.lt, heroScale: 6, field: true, fieldTau: c.lt * 1.1 + 0.3 });
       grade(c, "hell", { temperature: 0.15 });
       c.shake(0.25);
     });
@@ -34357,7 +34392,7 @@ void main(){
     });
     S(T("pavement and soil ripple"), (c) => {
       c.cam.fov = 44;
-      c.look(V(-6 + c.u * 4, 2.2, 52), V(-6, 0, 20));
+      c.look(V(22.5, 2.6, 78 - c.u * 4), V(22, 0, 28));
       city(c, { ...QN, quake: Q(c), ripple: 0.55, focus: [-6, 30, 40] });
       c.shake(1, 6);
       grade(c, "night");
@@ -34371,7 +34406,7 @@ void main(){
     });
     S(T("the motion builds"), (c) => {
       c.cam.fov = 34;
-      c.look(V(14, 6, 34), V(-6, 14, 6));
+      c.look(V(23, 7, 24), V(-6.5, 14, 6.5));
       city(c, { ...QN, quake: Q(c), focus: [-6, 6, 40] });
       c.shake(1);
       grade(c, "night");
@@ -34474,6 +34509,7 @@ void main(){
       const tb = s.buildings.find((b) => b.fate === "tip") || s.hero;
       const p = tb.position;
       s.mud.position.set(p.x, 0.2, p.z);
+      s.mud.scale.setScalar(1);
       c.cam.fov = 40;
       c.look(V(p.x - 40 * tb.tipDir, 8, p.z + 40), V(p.x + 6 * tb.tipDir, 8, p.z));
       city(c, { ...QN, quake: Q(c), mud: true, focus: [p.x, p.z, 50] });
@@ -34485,6 +34521,7 @@ void main(){
       const sb = s.buildings.find((b) => b.fate === "sink") || s.hero;
       const p = sb.position;
       s.mud.position.set(p.x, 0.2, p.z);
+      s.mud.scale.setScalar(1);
       c.cam.fov = 36;
       c.look(V(p.x + 22, 4, p.z + 26), V(p.x, 6, p.z));
       city(c, { ...QN, quake: Q(c), mud: true, focus: [p.x, p.z, 50] });
@@ -34519,7 +34556,7 @@ void main(){
       c.shake(0.5);
       const g = c.use2D();
       const secs = Math.min(80, Math.floor(18 + c.lt * 22));
-      tag(g, c.lt, 1640, 140, `0:${String(Math.floor(secs / 60))}${secs >= 60 ? ":" + String(secs % 60).padStart(2, "0") : String(secs).padStart(2, "0")}`.replace("0:0:", "1:"), { size: 64, family: FONT.mono, weight: "700", bg: "rgba(170,20,10,0.8)" });
+      tag(g, c.lt, 1640, 140, `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}`, { size: 64, family: FONT.mono, weight: "700", bg: "rgba(170,20,10,0.8)" });
       grade(c, "macro");
     });
     cue(T("in those long seconds"), "music", { mood: "elegy", dur: 14 });
@@ -35485,19 +35522,21 @@ void main(){
   }
   var mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
   var Rig = class _Rig {
-    constructor(ctx, dest) {
+    constructor(ctx, dest, { compressor = true } = {}) {
       this.ctx = ctx;
       const sr = ctx.sampleRate;
       this.master = ctx.createGain();
       this.master.gain.value = MASTER;
-      const comp = ctx.createDynamicsCompressor();
-      comp.threshold.value = -16;
-      comp.knee.value = 10;
-      comp.ratio.value = 4;
-      comp.attack.value = 0.01;
-      comp.release.value = 0.25;
-      this.master.connect(comp);
-      comp.connect(dest);
+      if (compressor) {
+        const comp = ctx.createDynamicsCompressor();
+        comp.threshold.value = -16;
+        comp.knee.value = 10;
+        comp.ratio.value = 4;
+        comp.attack.value = 0.01;
+        comp.release.value = 0.25;
+        this.master.connect(comp);
+        comp.connect(dest);
+      } else this.master.connect(dest);
       this.verb = ctx.createConvolver();
       this.verb.buffer = _Rig.cache(sr, "ir", () => makeImpulse(sr));
       const vg = ctx.createGain();
@@ -35675,7 +35714,7 @@ void main(){
     s2.connect(f2).connect(g2).connect(R2.bus.sfx);
     L.boomCore(R2, w + 0.02, { gain: 0.7 * k, f0: 80, f1: 35, decay: 1.8, noise: 0.6, lp: 500 });
   };
-  L.crackle = (R2, w, p, off) => {
+  L.crackle = (R2, w, p, off = 0) => {
     const dur = p.dur || 2;
     const r = mulberry32(Math.floor(w * 77));
     const n = Math.floor(dur * 45);
@@ -35690,7 +35729,7 @@ void main(){
       s.connect(f).connect(g).connect(pn).connect(R2.bus.sfx);
     }
   };
-  L.rumble = (R2, w, p, off) => {
+  L.rumble = (R2, w, p, off = 0) => {
     const dur = p.dur || 6;
     const s = R2.src("brown", w, dur - off, w + off);
     const f = R2.filt("lowpass", 110);
@@ -35698,7 +35737,7 @@ void main(){
     env(g.gain, w, off, [[0, 0], [Math.min(2, dur / 3), 0.9 * (p.gain || 1)], [dur - 1.5, 0.8 * (p.gain || 1)], [dur, 0]]);
     s.connect(f).connect(g).connect(R2.bus.bed);
   };
-  L.swell = (R2, w, p, off) => {
+  L.swell = (R2, w, p, off = 0) => {
     const dur = p.dur || 4;
     for (const [m, d] of [[45, 0], [52, 7], [57, -5]]) {
       const o = R2.osc("sawtooth", mtof(m), w, dur);
@@ -35711,7 +35750,7 @@ void main(){
       o.connect(f).connect(g).connect(R2.bus.music);
     }
   };
-  L.riser = (R2, w, p, off) => {
+  L.riser = (R2, w, p, off = 0) => {
     const dur = p.dur || 3;
     const s = R2.src("white", w, dur, w);
     const f = R2.filt("bandpass", 300, 2);
@@ -35726,7 +35765,7 @@ void main(){
     env(og.gain, w, off, [[0, 0], [dur, 0.15 * (p.gain || 1)], [dur + 0.05, 0]]);
     o.connect(og).connect(R2.bus.sfx);
   };
-  L.grind = (R2, w, p, off) => {
+  L.grind = (R2, w, p, off = 0) => {
     const dur = p.dur || 2;
     const s = R2.src("brown", w, dur, w);
     const f = R2.filt("bandpass", 260, 1.2);
@@ -35766,7 +35805,7 @@ void main(){
     o.connect(g).connect(R2.bus.sfx);
     L.rattle(R2, w, { dur: 0.4, gain: 0.8 });
   };
-  L.creak = (R2, w, p, off) => {
+  L.creak = (R2, w, p, off = 0) => {
     const dur = p.dur || 3;
     const o = R2.osc("sawtooth", 85, w, dur);
     const lfo = R2.osc("sine", 0.7, w, dur);
@@ -35778,7 +35817,7 @@ void main(){
     o.connect(f).connect(g).connect(R2.bus.sfx);
     L.rumble(R2, w, { dur, gain: 0.35 }, off);
   };
-  L.spring = (R2, w, p, off) => {
+  L.spring = (R2, w, p, off = 0) => {
     const dur = p.dur || 3;
     const o = R2.osc("sine", 1650, w, dur);
     o.frequency.linearRampToValueAtTime(2300, w + dur);
@@ -35807,7 +35846,7 @@ void main(){
     }
     L.crack(R2, w, { gain: 0.8 * k });
   };
-  L.wind = (R2, w, p, off) => {
+  L.wind = (R2, w, p, off = 0) => {
     const dur = p.dur || 6;
     const s = R2.src("pink", w, dur - off, w + off);
     const f = R2.filt("bandpass", 500, 0.8);
@@ -35818,7 +35857,7 @@ void main(){
     env(g.gain, w, off, [[0, 0], [1.5, 0.5 * (p.gain || 1)], [dur - 1.5, 0.5 * (p.gain || 1)], [dur, 0]]);
     s.connect(f).connect(g).connect(R2.bus.bed);
   };
-  L.lava = (R2, w, p, off) => {
+  L.lava = (R2, w, p, off = 0) => {
     const dur = p.dur || 6;
     L.rumble(R2, w, { dur, gain: 0.6 * (p.gain || 1) }, off);
     const r = mulberry32(31);
@@ -35852,7 +35891,7 @@ void main(){
       }
     }
   };
-  L.drill = (R2, w, p, off) => {
+  L.drill = (R2, w, p, off = 0) => {
     const dur = p.dur || 2;
     const s = R2.src("white", w, dur, w);
     const f = R2.filt("bandpass", 1800, 1.5);
@@ -35875,7 +35914,7 @@ void main(){
     expDecay(og.gain, w, 0.08, 0.05);
     o.connect(og).connect(R2.bus.sfx);
   };
-  L.heartbeat = (R2, w, p, off) => {
+  L.heartbeat = (R2, w, p, off = 0) => {
     const dur = p.dur || 6;
     const bpm = 64;
     for (let t = 0; t < dur; t += 60 / bpm) {
@@ -35937,7 +35976,7 @@ void main(){
       o.connect(g).connect(R2.pan(r() * 2 - 1)).connect(R2.bus.sfx);
     }
   };
-  L.sizzle = (R2, w, p, off) => {
+  L.sizzle = (R2, w, p, off = 0) => {
     const dur = p.dur || 3;
     const s = R2.src("white", w, dur - off, w + off);
     const f = R2.filt("highpass", 3e3);
@@ -35946,7 +35985,7 @@ void main(){
     s.connect(f).connect(g).connect(R2.bus.sfx);
     L.crackle(R2, w, { dur, gain: 0.5 * (p.gain || 1) }, off);
   };
-  L.groan = (R2, w, p, off) => {
+  L.groan = (R2, w, p, off = 0) => {
     const dur = p.dur || 3;
     const o = R2.osc("sawtooth", 48, w, dur);
     o.frequency.linearRampToValueAtTime(36, w + dur);
@@ -35972,7 +36011,7 @@ void main(){
     L.boomCore(R2, w + 0.9, { gain: 1, f0: 70, f1: 30, decay: 3, noise: 0.9, lp: 700 });
     L.boomCore(R2, w + 2.4, { gain: 0.9, f0: 55, f1: 25, decay: 4, noise: 0.9, lp: 500 });
   };
-  L.tear = (R2, w, p, off) => {
+  L.tear = (R2, w, p, off = 0) => {
     const dur = p.dur || 6;
     const s = R2.src("white", w, dur - off, w + off);
     const f = R2.filt("bandpass", 300, 1.5);
@@ -36014,7 +36053,7 @@ void main(){
     expDecay(g.gain, w, 0.25 * (p.gain || 1), 0.35);
     s.connect(f).connect(g).connect(R2.bus.sfx);
   };
-  L.roar = (R2, w, p, off) => {
+  L.roar = (R2, w, p, off = 0) => {
     const dur = p.dur || 5;
     L.rumble(R2, w, { dur, gain: 1.4 * (p.gain || 1) }, off);
     const s = R2.src("brown", w, dur, w * 2 + off);
@@ -36067,7 +36106,7 @@ void main(){
     L.boomCore(R2, w, { gain: 1.2 * (p.gain || 1), f0: 70, f1: 25, decay: 3.5, noise: 1.3, lp: 600 });
     L.zap(R2, w + 0.1, { gain: 0.6 });
   };
-  L.carAlarm = (R2, w, p, off) => {
+  L.carAlarm = (R2, w, p, off = 0) => {
     const dur = p.dur || 5;
     const o = R2.osc("square", 760, w, dur);
     for (let t = 0; t < dur; t += 0.5) if (t >= off) o.frequency.setValueAtTime(Math.floor(t * 2) % 2 ? 940 : 760, w + t - off);
@@ -36076,7 +36115,7 @@ void main(){
     env(g.gain, w, off, [[0, 0], [0.05, 0.035 * (p.gain || 1)], [dur - 0.2, 0.035 * (p.gain || 1)], [dur, 0]]);
     o.connect(f).connect(g).connect(R2.pan(0.4)).connect(R2.bus.sfx);
   };
-  L.hiss = (R2, w, p, off) => {
+  L.hiss = (R2, w, p, off = 0) => {
     const dur = p.dur || 3;
     const s = R2.src("white", w, dur - off, w + off);
     const f = R2.filt("highpass", 3500);
@@ -36084,7 +36123,7 @@ void main(){
     env(g.gain, w, off, [[0, 0], [0.2, 0.18 * (p.gain || 1)], [dur - 0.3, 0.18 * (p.gain || 1)], [dur, 0]]);
     s.connect(f).connect(g).connect(R2.bus.sfx);
   };
-  L.cries = (R2, w, p, off) => {
+  L.cries = (R2, w, p, off = 0) => {
     const dur = p.dur || 5;
     const s = R2.src("pink", w, dur - off, w + off);
     const f = R2.filt("bandpass", 700, 6);
@@ -36114,7 +36153,7 @@ void main(){
       s.connect(f).connect(g).connect(R2.pan(r() * 2 - 1)).connect(R2.bus.sfx);
     }
   };
-  L.excavator = (R2, w, p, off) => {
+  L.excavator = (R2, w, p, off = 0) => {
     const dur = p.dur || 6;
     const o = R2.osc("sawtooth", 38, w, dur);
     const f = R2.filt("lowpass", 220);
@@ -36127,8 +36166,8 @@ void main(){
     wh.connect(wg).connect(R2.bus.sfx);
     L.crumble(R2, w + 1, { dur: dur - 2, gain: 0.4 });
   };
-  L.truck = (R2, w, p, off) => L.excavator(R2, w, { dur: p.dur || 5, gain: 0.6 * (p.gain || 1) }, off);
-  L.seismo = (R2, w, p, off) => {
+  L.truck = (R2, w, p, off = 0) => L.excavator(R2, w, { dur: p.dur || 5, gain: 0.6 * (p.gain || 1) }, off);
+  L.seismo = (R2, w, p, off = 0) => {
     const dur = p.dur || 3;
     const s = R2.src("white", w, dur - off, w + off);
     const f = R2.filt("bandpass", 4e3, 3);
@@ -36137,7 +36176,7 @@ void main(){
     s.connect(f).connect(g).connect(R2.bus.sfx);
     for (let t = 0; t < dur; t += 0.5) if (t >= off) L.tick(R2, w + t - off, { gain: 0.25 });
   };
-  L.fire = (R2, w, p, off) => {
+  L.fire = (R2, w, p, off = 0) => {
     const dur = p.dur || 5;
     L.rumble(R2, w, { dur, gain: 0.3 }, off);
     L.crackle(R2, w, { dur, gain: 0.8 * (p.gain || 1) }, off);
@@ -36154,7 +36193,7 @@ void main(){
   };
   L.silence = () => {
   };
-  L.bed = (R2, w, p, off) => {
+  L.bed = (R2, w, p, off = 0) => {
     const dur = p.dur || 10;
     const k = p.gain || 0.5;
     const type = p.type || "wind";
@@ -36289,7 +36328,7 @@ void main(){
     reflect: { chords: [[45, 52, 57, 60], [41, 48, 55, 57], [48, 55, 60, 64], [43, 50, 55, 59]], tempo: 8, bright: 1e3, pluck: [69, 72, 76, 74], level: 0.9 },
     finale: { chords: [[45, 52, 57, 60], [41, 48, 53, 60], [48, 55, 60, 64], [43, 50, 55, 62]], tempo: 6, bright: 1500, pluck: [69, 72, 76, 79, 81], level: 1.1 }
   };
-  L.music = (R2, w, p, off) => {
+  L.music = (R2, w, p, off = 0) => {
     const m = MOODS[p.mood] || MOODS.calm;
     const dur = p.dur || 20;
     const lvl = 0.05 * m.level * (p.gain || 1);
@@ -36410,13 +36449,37 @@ void main(){
       }
     }
     // ---------- offline export ----------
+    // Each cue is rendered in its own short OfflineAudioContext and overlap-added into the
+    // full-length track. Rendering everything in one giant graph is extremely slow because every
+    // scheduled node keeps processing silence for the whole film.
     async renderAll(sampleRate = 44100) {
       if (this.full && this.full.sampleRate === sampleRate) return this.full;
       const len = Math.ceil((DURATION + 1) * sampleRate);
-      const ctx = new OfflineAudioContext(2, len, sampleRate);
-      const rig = new Rig(ctx, ctx.destination);
-      for (const c of this.cues) this.play(rig, c, c.t, 0);
-      this.full = await ctx.startRendering();
+      const outL = new Float32Array(len), outR = new Float32Array(len);
+      const PRE = 1.2, TAIL = 5.5;
+      for (const c of this.cues) {
+        if (!L[c.name] || c.name === "silence" || c.name === "cough") continue;
+        const body = c.p && c.p.dur ? c.p.dur : LONG.has(c.name) ? 6 : 9;
+        const span = PRE + body + TAIL;
+        const n = Math.ceil(span * sampleRate);
+        const ctx = new OfflineAudioContext(2, n, sampleRate);
+        const rig = new Rig(ctx, ctx.destination, { compressor: false });
+        this.play(rig, c, PRE, 0);
+        const buf = await ctx.startRendering();
+        const at = Math.round((c.t - PRE) * sampleRate);
+        const l = buf.getChannelData(0), r = buf.getChannelData(1);
+        for (let i = 0; i < n; i++) {
+          const j = at + i;
+          if (j < 0 || j >= len) continue;
+          outL[j] += l[i];
+          outR[j] += r[i];
+        }
+      }
+      for (const ch of [outL, outR]) for (let i = 0; i < len; i++) {
+        const x = ch[i];
+        ch[i] = x / (1 + Math.abs(x) * 0.35);
+      }
+      this.full = { sampleRate, length: len, getChannelData: (k) => k ? outR : outL };
       return this.full;
     }
     // 16-bit little-endian interleaved PCM of [start, start+dur) as base64
@@ -36445,6 +36508,15 @@ void main(){
   var scale = parseFloat(params.get("scale") || "1");
   var startAt = parseFloat(params.get("t") || "0");
   var canvas = document.getElementById("gl");
+  if (RENDER) {
+    const w = Math.round(1920 * scale), h = Math.round(1080 * scale);
+    for (const el of [document.documentElement, document.body]) {
+      el.style.width = w + "px";
+      el.style.height = h + "px";
+    }
+    canvas.style.width = w + "px";
+    canvas.style.height = h + "px";
+  }
   var director = new Director(canvas, { scale, samples: parseInt(params.get("samples") || "4", 10) });
   window.director = director;
   window.totalDuration = Math.round(DURATION * 1e3);

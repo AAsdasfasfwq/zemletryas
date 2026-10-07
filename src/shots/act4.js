@@ -34,7 +34,7 @@ export function act4(D) {
   S(tUnder, (c) => { const b = c.use('block'); c.cam.fov = 30; dolly(c, V(-3, -10.5, 14), V(-1, -11.6, 6), V(0, -12, 0), V(0, -12, 0)); b.update(c.t, { S: 14, hideSouth: true, locked: 0.38, stress: 1, glow: 0.4, crack: 0.4 + c.u * 0.45 }); grade(c, 'blood'); dof(c, 8, 0.5); });
   S(T('it is coming apart'), (c) => { const b = c.use('block'); c.cam.fov = 24; c.look(V(0.5 - c.u, -11.8, 4.5 - c.u * 1.5), V(0, -12, 0)); b.update(c.t, { S: 14, hideSouth: true, locked: 0.36, stress: 1, glow: 0.45, crack: 0.85 + c.u * 0.15 }); c.handheld(1); grade(c, 'blood'); dof(c, 3.5, 1.0); });
   cue(T('ultra sensitive instruments'), 'seismo', { dur: 3.5, gain: 0.4 });
-  S(T('ultra sensitive instruments'), (c) => { const m = c.use('macro'); c.cam.fov = 30; dolly(c, V(4, 4.5, 7), V(2.5, 3.6, 5.5), V(0, 2.3, 0), V(0, 2.3, 0.5)); m.update(c.t, { prop: 'seismo', amp: 0.08 + 0.12 * smooth(c.u * 1.5) }); grade(c, 'macro'); dof(c, 6, 0.6); });
+  S(T('ultra sensitive instruments'), (c) => { const m = c.use('macro'); c.cam.fov = 30; dolly(c, V(4, 4.5, 7), V(2.5, 3.6, 5.5), V(0, 2.3, 0), V(0, 2.3, 0.5)); m.update(c.t, { prop: 'seismo', amp: 0.08 + 0.12 * smooth(c.u * 1.5), key: 140 }); grade(c, 'macro'); dof(c, 6, 0.6); });
   S(T('but scientists still cannot predict'), (c) => { const l = c.use('lab'); c.cam.fov = 36; c.look(V(3 - c.u, 1.9, 3), V(-1, 2.0, -3)); l.update(c.t, { area: 'centre', alarm: 0.2 }); grade(c, 'cold'); dof(c, 4.5, 0.4); });
   // winter
   cue(T('above ground a harsh winter'), 'music', { mood: 'cold', dur: 26 });
@@ -65,13 +65,13 @@ export function act4(D) {
   S(T('science cannot predict'), (c) => { const l = c.use('lab'); c.cam.fov = 38; c.look(V(4, 2.2, 4), V(-1, 1.6, -3)); l.update(c.t, { area: 'centre', alarm: 0 }); l.desks.forEach((p) => (p.visible = false)); grade(c, 'cold'); });
   S(T('but nature offers clues'), (c) => { orbit(c, V(-44, 0, 44), 70, 26, 1.0, 1.25); c.cam.fov = 40; city(c, { ...NIGHT_SNOW, windows: 0.25, focus: [-44, 44, 60] }); c.sets.room && null; grade(c, 'night'); });
   // animals
-  S(T('later survivors will describe'), (c) => { const r = c.use('room'); c.cam.fov = 34; c.look(V(-3 + c.u * 0.5, 0.6, 3), V(-1, 0.5, 1)); r.update(c.t, { room: 'living', tv: 'off', power: 0.4, family: 'sit', cat: 'run', catT: -1 }); r.family.forEach((p) => (p.visible = false)); grade(c, 'night', { temperature: 0.1 }); });
+  S(T('later survivors will describe'), (c) => { const r = c.use('room'); c.cam.fov = 34; c.look(V(-3 + c.u * 0.5, 0.6, 3), V(-1, 0.5, 1)); r.update(c.t, { room: 'living', tv: 'off', power: 0.7, family: 'sit', cat: 'run', catT: -1 }); r.family.forEach((p) => (p.visible = false)); grade(c, 'night', { temperature: 0.1 }); });
   cue(T('cats raced through'), 'catRun', { gain: 0.4 });
-  S(T('cats raced through'), (c) => { const r = c.use('room'); c.cam.fov = 40; c.look(V(-2 + c.u * 3, 0.35, 2.4), V(0.5 + c.u * 2, 0.2, 0.9)); r.update(c.t, { room: 'living', tv: 'off', power: 0.4, cat: 'run', catT: c.lt * 1.1 }); r.family.forEach((p) => (p.visible = false)); c.handheld(1.5, 1.5); grade(c, 'night', { temperature: 0.1 }); c.post.whip = 0.015; });
-  S(T('refused to be held'), (c) => { const r = c.use('room'); c.cam.fov = 34; c.look(V(24 + 0.8, 0.35, 1.2), V(24 - 0.5, 0.2, -0.55)); r.update(c.t, { room: 'bath', catIn: smooth(c.lt / 2), power: 0.7 }); grade(c, 'cold', { saturation: 1 }); dof(c, 1.9, 1.0); });
+  S(T('cats raced through'), (c) => { const r = c.use('room'); c.cam.fov = 40; c.look(V(-2 + c.u * 3, 0.35, 2.4), V(0.5 + c.u * 2, 0.2, 0.9)); r.update(c.t, { room: 'living', tv: 'off', power: 0.7, cat: 'run', catT: c.lt * 1.1 }); r.family.forEach((p) => (p.visible = false)); c.handheld(1.5, 1.5); grade(c, 'night', { temperature: 0.1 }); c.post.whip = 0.015; });
+  S(T('refused to be held'), (c) => { const r = c.use('room'); c.cam.fov = 34; c.look(V(24 + 0.8, 0.35, 1.2), V(24 - 0.5, 0.2, -0.55)); r.update(c.t, { room: 'bath', catIn: smooth(c.lt / 2), power: 1 }); grade(c, 'cold', { saturation: 1 }); dof(c, 1.9, 1.0); });
   cue(T('stray dogs gathered'), 'dogHowl', { gain: 0.45 });
-  S(T('stray dogs gathered'), (c) => { c.cam.fov = 32; c.look(V(-44 + 2 + 7, 1.2, 44 + 2), V(-44 + 6.5, 0.8, 44 - 5)); city(c, { ...NIGHT_SNOW, windows: 0.2, dogs: true, focus: [-38, 40, 30] }); grade(c, 'night'); dof(c, 8, 0.5); });
-  S(T('howling into the darkness'), (c) => { c.cam.fov = 26; c.look(V(-44 + 4, 0.5, 44 - 2.5), V(-44 + 5.5, 1.1, 44 - 5)); city(c, { ...NIGHT_SNOW, windows: 0.2, dogs: true, focus: [-38, 40, 30] }); grade(c, 'night'); dof(c, 3, 1.0); });
+  S(T('stray dogs gathered'), (c) => { c.cam.fov = 32; c.look(V(-44 + 2 + 7, 1.2, 44 + 2), V(-44 + 6.5, 0.8, 44 - 5)); const s = city(c, { ...NIGHT_SNOW, windows: 0.2, dogs: true, focus: [-38, 40, 30] }); s.points[0].position.set(-37, 6, 42); s.points[0].color.set(0xffb070); s.points[0].distance = 30; s.points[0].intensity = 260; grade(c, 'night'); dof(c, 8, 0.5); });
+  S(T('howling into the darkness'), (c) => { c.cam.fov = 26; c.look(V(-44 + 4, 0.5, 44 - 2.5), V(-44 + 5.5, 1.1, 44 - 5)); const s = city(c, { ...NIGHT_SNOW, windows: 0.2, dogs: true, focus: [-38, 40, 30] }); s.points[0].position.set(-37, 6, 42); s.points[0].color.set(0xffb070); s.points[0].distance = 30; s.points[0].intensity = 260; grade(c, 'night'); dof(c, 3, 1.0); });
   const tDespite = T('despite the freezing rain');
   const tBirds = T('birds took flight');
   cue(tBirds, 'birds', { gain: 0.5 });

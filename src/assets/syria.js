@@ -81,7 +81,7 @@ export class SyriaSet {
 
     // ---------- Idlib camp (x ~ 300) ----------
     this.camp = new THREE.Group(); this.camp.position.set(300, 0, 0); s.add(this.camp);
-    const tentM = [mat('#e9e6dc', { rough: 0.95, side: THREE.DoubleSide }), mat('#d8dfe6', { rough: 0.95, side: THREE.DoubleSide }), mat('#c9d7e8', { rough: 0.95, side: THREE.DoubleSide })];
+    const tentM = [mat('#f2efe6', { rough: 0.95, side: THREE.DoubleSide }), mat('#5b8fc7', { rough: 0.9, side: THREE.DoubleSide }), mat('#c9d7e8', { rough: 0.95, side: THREE.DoubleSide })];
     const tentGeo = (() => { const g = new THREE.BufferGeometry(); const w = 2.2, l = 4, h = 2.1; const v = [-w, 0, -l, 0, h, -l, w, 0, -l, -w, 0, l, 0, h, l, w, 0, l]; const idx = [0, 1, 4, 0, 4, 3, 2, 5, 4, 2, 4, 1, 0, 2, 1, 3, 4, 5]; g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.setIndex(idx); g.computeVertexNormals(); return g; })();
     const tents = tentM.map((m) => new THREE.InstancedMesh(tentGeo, m, 120)); const counts = [0, 0, 0];
     for (let a = -7; a <= 7; a++) for (let b = -5; b <= 5; b++) { if (Math.abs(a) < 2 && Math.abs(b) < 2) continue; const k = (((a * 7 + b * 13) % 3) + 3) % 3; if (counts[k] >= 120) continue; dm.position.set(a * 7 + (r.next() - 0.5), 0, b * 10 + (r.next() - 0.5) * 2); dm.rotation.set(0, (r.next() - 0.5) * 0.15, 0); dm.scale.set(1, 1, 1); dm.updateMatrix(); tents[k].setMatrixAt(counts[k]++, dm.matrix); }
@@ -107,7 +107,7 @@ export class SyriaSet {
     const hills = new THREE.Mesh(jitterGeo(new THREE.SphereGeometry(200, 30, 10, 0, TAU, 0, Math.PI / 2), 20, 4), mat('#8f8a6a', { rough: 1, flat: true })); hills.scale.set(2.2, 0.25, 1); hills.position.set(0, -6, -330); this.camp.add(hills);
     this.campPeople = []; for (let k = 0; k < 14; k++) { const p = new Person(950 + k, { child: k % 3 === 0, coat: r.pick(['#4a3f35', '#3a3a40', '#5a4a3a', '#6a3a3a']) }); p.position.set((r.next() - 0.5) * 70, 0, (r.next() - 0.5) * 50); p.rotation.y = r.next() * TAU; p.userData.walk = r.chance(0.5); this.camp.add(p); this.campPeople.push(p); }
     this.snow = new Precip({ count: 8000, box: [80, 40, 80], fall: 1.8, wind: [2, 0, 0.6], size: 0.11, color: [1, 1, 1], opacity: 0.9, seed: 21 }); s.add(this.snow);
-    this.haze = dustBurst({ count: 120, center: [0, 0, 0], radius: 120, height: 25, speed: 0.2, spread: 0, life: [1e5, 1e5 + 1], size: [30, 70], color: [0.85, 0.75, 0.6], seed: 7, opacity: 0.3, rise: 0 }); this.haze.material.uniforms.uFadeIn.value = 0; this.haze.material.uniforms.uFadeOut.value = 0; s.add(this.haze);
+    this.haze = dustBurst({ count: 90, center: [0, 0, 0], radius: 140, height: 25, speed: 0.2, spread: 0, life: [1e5, 1e5 + 1], size: [30, 70], color: [0.85, 0.75, 0.6], seed: 7, opacity: 0.18, rise: 0 }); this.haze.material.uniforms.uFadeIn.value = 0; this.haze.material.uniforms.uFadeOut.value = 0; s.add(this.haze);
     this.megaDust = dustBurst({ count: 260, center: [0, 0, -10], radius: 70, height: 20, speed: 9, spread: 6, life: [10, 18], size: [12, 45], color: [0.86, 0.76, 0.6], seed: 77, opacity: 0.95 }); s.add(this.megaDust);
   }
   // o: { area: 'aleppo'|'camp', mood: 'dusty'|'winterDusk'|'overcast'|'stormNight', snow, quake:{t0, amp}, collapse, fires, helmets, megaDust:t }
@@ -115,7 +115,7 @@ export class SyriaSet {
     const mood = o.mood || 'dusty';
     if (this.mood !== mood) {
       this.mood = mood; this.sky.setPreset(mood); this.scene.environment = this.envs[mood];
-      const P = { dusty: [0xffd7a0, 3.2, [0.6, 0.45, -0.5], 0xd9c9b0, 0x6a5a48, 1.0, 0xc9b08a, 0.0026], winterDusk: [0x9fb0d0, 0.7, [0.6, 0.1, -0.6], 0x6a7898, 0x2a2a30, 1.0, 0x4a5064, 0.004], overcast: [0xdfe3ea, 1.2, [0.3, 0.8, -0.3], 0xc8ccd4, 0x6a665f, 1.5, 0x9da3aa, 0.003], stormNight: [0x5a6488, 0.25, [-0.4, 0.6, 0.5], 0x1a2030, 0x09090c, 0.45, 0x0c0e14, 0.004] }[mood];
+      const P = { dusty: [0xffd7a0, 3.2, [0.6, 0.45, -0.5], 0xd9c9b0, 0x6a5a48, 1.0, 0xc9b08a, 0.0012], winterDusk: [0x9fb0d0, 0.7, [0.6, 0.1, -0.6], 0x6a7898, 0x2a2a30, 1.0, 0x4a5064, 0.0025], overcast: [0xdfe3ea, 1.4, [0.3, 0.8, -0.3], 0xc8ccd4, 0x6a665f, 1.4, 0x9da3aa, 0.0015], stormNight: [0x5a6488, 0.25, [-0.4, 0.6, 0.5], 0x1a2030, 0x09090c, 0.45, 0x0c0e14, 0.004] }[mood];
       this.sun.color.set(P[0]); this.sun.intensity = P[1]; this.sunDir = new THREE.Vector3(...P[2]).normalize(); this.sky.setSun(this.sunDir);
       this.hemi.color.set(P[3]); this.hemi.groundColor.set(P[4]); this.hemi.intensity = P[5]; this.scene.fog.color.set(P[6]); this.scene.fog.density = P[7];
     }

@@ -15,6 +15,11 @@ const scale = parseFloat(params.get('scale') || '1');
 const startAt = parseFloat(params.get('t') || '0');
 
 const canvas = document.getElementById('gl');
+if (RENDER) { // in render mode the canvas must occupy exactly W x H CSS pixels (Puppeteer captures that rect)
+  const w = Math.round(1920 * scale), h = Math.round(1080 * scale);
+  for (const el of [document.documentElement, document.body]) { el.style.width = w + 'px'; el.style.height = h + 'px'; }
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+}
 const director = new Director(canvas, { scale, samples: parseInt(params.get('samples') || '4', 10) });
 window.director = director;
 window.totalDuration = Math.round(DURATION * 1000);

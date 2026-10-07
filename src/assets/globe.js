@@ -319,7 +319,7 @@ export class GlobeSet {
     this.coreLight = new THREE.PointLight(0xff7a2a, 0, 40, 1.5); this.spin.add(this.coreLight);
 
     // satellite (for InSAR / GNSS shots)
-    this.sat = new THREE.Group(); this.sat.visible = false; this.root.add(this.sat);
+    this.sat = new THREE.Group(); this.sat.visible = false; this.sat.scale.setScalar(1.8); this.root.add(this.sat);
     const gold = new THREE.MeshStandardMaterial({ color: 0xc9a646, metalness: 1, roughness: 0.3 }); const panelM = new THREE.MeshStandardMaterial({ color: 0x1d3a6f, metalness: 0.6, roughness: 0.25, emissive: new THREE.Color(0.02, 0.05, 0.12) });
     this.sat.add(new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.8), gold));
     for (const sx of [-1, 1]) { const p = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.02, 0.6), panelM); p.position.x = sx * 1.2; this.sat.add(p); const arm = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.04, 0.04), new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 0.9, roughness: 0.3 })); arm.position.x = sx * 0.35; this.sat.add(arm); }

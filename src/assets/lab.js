@@ -96,6 +96,7 @@ export class LabSet {
   update(t, o = {}) {
     const alarm = o.alarm || 0;
     this.motes.setTime(t);
+    this.desks.forEach((p) => (p.visible = true)); // shots may hide them after update()
     if (o.area !== 'hall') {
       this.big.forEach((sc, i) => { if (i === 0) drawMapScreen(sc, t, { gap: alarm > 0.3 ? 1 : 0 }); else if (i === 3) drawGPS(sc, t, o.gpsK || 1); else drawSeismogram(sc, t + i * 3, { amp: 0.08 + (i === 1 ? alarm * 0.2 : 0), title: ['', 'STATION KMRS  BHZ', 'STATION GAZ  BHN', '', 'STATION ANTK  BHE', 'STATION MLTY  BHZ'][i] || 'STATION', burst: o.burst !== undefined ? o.burst : -1, color: alarm > 0.5 && i === 1 ? '#ff6a4a' : '#4fe3ff' }); });
       this.deskScreens.forEach((sc, i) => { if (i % 2) drawGPS(sc, t + i, o.gpsK || 1); else drawSeismogram(sc, t + i * 5, { amp: 0.1, title: 'BHZ ' + i }); });

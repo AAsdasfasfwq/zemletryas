@@ -9,6 +9,7 @@
 //   node render.js --from 480 --to 520  # render only a range (preview a sequence)
 //   node render.js --scale 0.5          # half-resolution draft
 //   node render.js --gl swiftshader     # CPU rendering (no GPU available; slow)
+//   node render.js --audio-only         # only re-mix/re-mux the soundtrack (segments must exist)
 //
 // Requirements: Node 18+, `npm install`, ffmpeg in PATH (or `npm i ffmpeg-static`).
 const fs = require('fs');
@@ -77,17 +78,19 @@ function encoder(file, frames) {
   const p = spawn(FFMPEG, args, { stdio: ['pipe', 'inherit', 'inherit'] });
   return p;
 }
-function write(stream, buf) { return new Promise((res, rej) => { if (!stream.write(buf)) stream.once('drain', res); else res(); stream.once('error', rej); }); }
+function write(stream, buf) { return new Promise((res) => { if (!stream.write(buf)) stream.once('drain', res); else res(); }); }
 
 async function renderSegment(page, seg) {
   const tmp = seg.file + '.part.mp4';
   const enc = encoder(tmp, seg.n);
+  let encErr = null; enc.stdin.on('error', (e) => { encErr = e; });
   const done = new Promise((res, rej) => enc.on('close', (code) => (code === 0 ? res() : rej(new Error('ffmpeg exited ' + code)))));
   const t0 = Date.now();
   for (let i = 0; i < seg.n; i++) {
     const f = seg.start + i; const ms = (f / FPS) * 1000;
     await page.evaluate((m) => window.seekTo(m), ms);
     const jpg = await page.screenshot({ type: 'jpeg', quality: JPEG_Q, optimizeForSpeed: true, clip: { x: 0, y: 0, width: W, height: H } });
+    if (encErr) throw encErr;
     await write(enc.stdin, jpg);
   }
   enc.stdin.end(); await done;
@@ -106,18 +109,32 @@ async function renderSfx(page, duration, file) {
   }
   fs.closeSync(fd); fs.renameSync(file + '.part', file);
 }
+const VOICE_CHAIN = 'highpass=f=75,acompressor=threshold=0.06:ratio=3:attack=6:release=140:knee=4';
+function measureLoudness(args) {
+  const r = spawnSync(FFMPEG, ['-hide_banner', '-nostats', ...args, '-f', 'null', '-'], { encoding: 'utf8', maxBuffer: 1 << 26 });
+  const m = /I:\s+(-?[\d.]+) LUFS/.exec(r.stderr || ''); return m ? parseFloat(m[1]) : null;
+}
 function buildAudio(info, sfxRaw, outFile) {
-  // voice: cut at each gap and insert silence; then mix with SFX and limit
+  // voice: compressed and normalised to TARGET LUFS, cut at each gap with inserted silence;
+  // SFX ducked under the voice (sidechain), then everything through a true-peak-safe limiter.
   const voice = path.join(ROOT, 'assets', 'voice.mp3');
-  const gaps = info.gaps; const parts = []; let filters = []; let prev = 0; let k = 0;
-  for (const g of gaps) { filters.push(`[0:a]atrim=start=${prev}:end=${g.at},asetpts=PTS-STARTPTS,aresample=44100,aformat=channel_layouts=stereo[v${k}]`); parts.push(`[v${k}]`); k++;
-    filters.push(`aevalsrc=0|0:d=${g.dur}:s=44100,aformat=channel_layouts=stereo[s${k}]`); parts.push(`[s${k}]`); prev = g.at; }
-  filters.push(`[0:a]atrim=start=${prev},asetpts=PTS-STARTPTS,aresample=44100,aformat=channel_layouts=stereo[v${k}]`); parts.push(`[v${k}]`);
-  filters.push(`${parts.join('')}concat=n=${parts.length}:v=0:a=1,volume=${VOICE_VOL},apad=whole_dur=${info.duration}[voice]`);
-  filters.push(`[1:a]volume=${SFX_VOL}[sfx]`);
-  filters.push(`[voice][sfx]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.95:attack=5:release=60,atrim=end=${info.duration}[out]`);
+  const target = parseFloat(opt('loudness', -16));
+  const measured = measureLoudness(['-i', voice, '-af', `${VOICE_CHAIN},ebur128=framelog=quiet`]);
+  const vGain = measured === null ? 6 : Math.max(-6, Math.min(18, target - measured));
+  log(`voice loudness ${measured} LUFS → gain ${vGain.toFixed(1)} dB (target ${target} LUFS)`);
+  const gaps = info.gaps; const parts = []; const filters = []; let prev = 0; let k = 0;
+  filters.push(`[0:a]${VOICE_CHAIN},volume=${(vGain + 20 * Math.log10(VOICE_VOL)).toFixed(2)}dB,aresample=44100,aformat=channel_layouts=stereo,asplit=${gaps.length + 1}${gaps.map((_, i) => `[vi${i}]`).join('')}[vi${gaps.length}]`);
+  for (const g of gaps) { filters.push(`[vi${k}]atrim=start=${prev}:end=${g.at},asetpts=PTS-STARTPTS[v${k}]`); parts.push(`[v${k}]`);
+    filters.push(`aevalsrc=0|0:d=${g.dur}:s=44100,aformat=channel_layouts=stereo[s${k}]`); parts.push(`[s${k}]`); prev = g.at; k++; }
+  filters.push(`[vi${k}]atrim=start=${prev},asetpts=PTS-STARTPTS[v${k}]`); parts.push(`[v${k}]`);
+  filters.push(`${parts.join('')}concat=n=${parts.length}:v=0:a=1,apad=whole_dur=${info.duration},asplit=2[voice][vkey]`);
+  filters.push(`[1:a]volume=${(SFX_VOL * Math.pow(10, (vGain - 8) / 20)).toFixed(3)}[sfxraw]`);
+  if (opt('duck', 'on') !== 'off') filters.push(`[sfxraw][vkey]sidechaincompress=threshold=0.04:ratio=3.5:attack=25:release=420:knee=3[sfx]`);
+  else filters.push(`[sfxraw]anull[sfx]; [vkey]anullsink`);
+  filters.push(`[voice][sfx]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.89:attack=4:release=80:level=false,atrim=end=${info.duration}[out]`);
   const args = ['-y', '-loglevel', 'error', '-i', voice, '-f', 's16le', '-ar', '44100', '-ac', '2', '-i', sfxRaw, '-filter_complex', filters.join(';'), '-map', '[out]', '-c:a', 'pcm_s16le', outFile];
   const r = spawnSync(FFMPEG, args, { stdio: 'inherit' }); if (r.status !== 0) throw new Error('audio mix failed');
+  const fin = measureLoudness(['-i', outFile, '-af', 'ebur128=framelog=quiet']); log(`final mix loudness: ${fin} LUFS`);
 }
 
 // ---------------- main ----------------
@@ -136,7 +153,9 @@ function buildAudio(info, sfxRaw, outFile) {
   const F0 = Math.round(from * FPS), F1 = Math.round(to * FPS);
   const segLen = Math.round(SEG_SECONDS * FPS); const segs = [];
   for (let f = F0, i = 0; f < F1; f += segLen, i++) segs.push({ i, start: f, n: Math.min(segLen, F1 - f), file: path.join(WORK, `seg_${String(f).padStart(6, '0')}_${Math.min(segLen, F1 - f)}_${W}.mp4`) });
-  const todo = segs.filter((s) => !fs.existsSync(s.file));
+  const AUDIO_ONLY = !!opt('audio-only', false);
+  const todo = AUDIO_ONLY ? [] : segs.filter((s) => !fs.existsSync(s.file));
+  if (AUDIO_ONLY && segs.some((s) => !fs.existsSync(s.file))) { console.error('--audio-only: some video segments are missing; render them first'); process.exit(1); }
   log(`${segs.length} segments, ${todo.length} to render (${segs.length - todo.length} already done)`);
 
   // audio first (fast), on the first page

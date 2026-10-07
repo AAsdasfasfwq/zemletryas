@@ -56,6 +56,7 @@ export class SkyDome extends THREE.Mesh {
     const m = new THREE.ShaderMaterial({ vertexShader: SKY_VERT, fragmentShader: SKY_FRAG, uniforms: u, side: THREE.BackSide, depthWrite: false });
     super(new THREE.SphereGeometry(4000, 48, 24), m);
     this.frustumCulled = false; this.renderOrder = -100;
+    this.onBeforeRender = (r, sc, cam) => { this.position.copy(cam.position); this.updateMatrixWorld(); };
     this.setPreset(preset);
   }
   setPreset(name, overrides = {}) {
