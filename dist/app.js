@@ -35826,6 +35826,18 @@ void main(){ float a = texture2D(map, vUv).a * vA * uOpacity; if(a < 0.004) disc
           f.userData.light = L2;
         }
       });
+      {
+        const f = fireStream({ origin: [-96, 0.8, 150], radius: 1.2, height: 3.5, count: 80, seed: 177, scale: 2.6 });
+        this.bigFires.add(f);
+        const L2 = new PointLight(16742960, 0, 70, 1.5);
+        L2.position.set(-96, 3, 150);
+        L2.userData.base = 160;
+        this.bigFires.add(L2);
+        const wreck = makeCar(977, { color: "#2a2622" });
+        wreck.position.set(-96, 0, 150);
+        wreck.rotation.y = 0.7;
+        this.bigFires.add(wreck);
+      }
       this.smokeCols = new Group();
       this.after.add(this.smokeCols);
       for (let k = 0; k < 7; k++) {
@@ -35966,9 +35978,17 @@ void main(){ float a = texture2D(map, vUv).a * vA * uOpacity; if(a < 0.004) disc
       this.overpass.position.set(-2.5 * P, 0, 3.5 * P);
       this.after.add(this.overpass);
       const cm2 = mat("#a9a49a", { rough: 0.95 });
-      for (const x of [-30, 0, 30]) {
+      for (const x of [-30, 0]) {
         this.overpass.add(box(2.2, 9, 3, cm2, x, 4.5, 0));
         this.overpass.add(box(4, 1, 12, cm2, x, 9.3, 0));
+      }
+      {
+        const stub = box(2.2, 3.2, 3, cm2, 30, 1.6, 0);
+        stub.rotation.z = 0.12;
+        this.overpass.add(stub);
+        const cap = box(4, 1, 12, cm2, 33, 0.5, 2);
+        cap.rotation.set(0.1, 0.3, 0.5);
+        this.overpass.add(cap);
       }
       const d1 = box(30, 1.4, 12, cm2, -15, 10.4, 0);
       this.overpass.add(d1);
@@ -36382,6 +36402,9 @@ void main(){ float a = texture2D(map, vUv).a * vA * uOpacity; if(a < 0.004) disc
         this.boomLight.intensity = tau < 0 ? 0 : fl * 4e4 * (b.size || 1);
         this.boomLight.position.y = 4;
       }
+      const nightGas = tod === "blackout";
+      this.gas.opacity = nightGas ? 0.3 : 0.55;
+      this.gas.material.uniforms.uColor.value.setRGB(...nightGas ? [0.2, 0.21, 0.24] : [0.9, 0.92, 0.95]);
       this.gas.visible = !!o.gas;
       this.gas.material.uniforms.uTime.value = t;
       this.poleSparks.visible = o.poleSparks !== void 0;
@@ -42612,7 +42635,7 @@ void main(){
     });
     S(T("concrete apartment buildings never designed"), (c) => {
       c.cam.fov = 30;
-      c.look(V(-2, 0.6, 30), V(-18, 30, -10));
+      c.look(V(-2, 0.6, 28), V(-18, 30, -10));
       city(c, { ...QN, quake: Q(c), focus: [-10, 0, 60] });
       c.shake(0.8);
       grade(c, "night");
@@ -42836,7 +42859,7 @@ void main(){
     });
     S(T("millions of tons of concrete dust"), (c) => {
       c.cam.fov = 38;
-      c.look(V(HP[0] + 14, 2, HP[1] + 24), V(HP[0], 2.5, HP[1] + 8));
+      c.look(V(HP[0] + 14, 2, HP[1] + 22), V(HP[0], 2.5, HP[1] + 8));
       const s = city(c, { ...BLACKOUT, haze: 1.1, hazeColor: [0.2, 0.19, 0.18], rescuers: true, focus: [HP[0], HP[1] + 10, 30] });
       s.flashlight(0, [HP[0] + 4, 1.8, HP[1] + 12], [HP[0] - 2 + Math.sin(c.t * 0.7) * 3, 1, HP[1] + 4], 1);
       s.flashlight(1, [HP[0] - 5, 2, HP[1] + 10], [HP[0] + 2, 0.5, HP[1] + 6 + Math.cos(c.t * 0.5) * 2], 0.8);
@@ -42847,7 +42870,7 @@ void main(){
       c.cam.fov = 34;
       c.look(V(HP[0] + 6.5, 1.5, HP[1] + 19), V(HP[0] + 3, 1.4, HP[1] + 15));
       const s = city(c, { ...BLACKOUT, haze: 1, hazeColor: [0.2, 0.19, 0.18], focus: [HP[0], HP[1] + 14, 20], feat: [{ kind: "pj", i: 0, pos: [HP[0] + 3, 0, HP[1] + 15], snap: true, ry: 0.6, pose: "cry" }, { kind: "pj", i: 1, pos: [HP[0] + 1.6, 0, HP[1] + 14.4], snap: true, ry: 0.9, pose: "shiver" }] });
-      s.flashlight(0, [HP[0] + 9, 2.2, HP[1] + 20], [HP[0] + 2.5, 1.2, HP[1] + 14.5], 1, 14);
+      s.flashlight(0, [HP[0] + 9, 2.2, HP[1] + 20], [HP[0] + 2.5, 1.2, HP[1] + 14.5], 0.5, 14);
       grade(c, "night", { saturation: 0.7 });
       dof(c, 4.5, 0.6);
     });
@@ -42879,7 +42902,7 @@ void main(){
       c.cam.fov = 26;
       c.look(V(HP[0] + 3.4, 0.25, HP[1] + 18.2), V(HP[0] + 1.6, 0.15, HP[1] + 16));
       const s = city(c, { ...BLACKOUT, snowCover: 1, focus: [HP[0], HP[1] + 16, 15], feat: [{ kind: "pj", i: 2, pos: [HP[0] + 1.4, 0, HP[1] + 15.6], snap: true, ry: 0.4, pose: "shiver" }, { kind: "pj", i: 3, pos: [HP[0] + 2.4, 0, HP[1] + 15.2], snap: true, ry: -0.3, pose: "shiver" }] });
-      s.flashlight(0, [HP[0] + 6, 2, HP[1] + 20], [HP[0] + 1.8, 0, HP[1] + 15.5], 0.3, 10);
+      s.flashlight(0, [HP[0] + 6, 2, HP[1] + 20], [HP[0] + 1.8, 0, HP[1] + 15.5], 0.15, 10);
       grade(c, "cold");
       dof(c, 2.6, 1);
     });
@@ -42887,7 +42910,7 @@ void main(){
       c.cam.fov = 30;
       c.look(V(HP[0] + 6 - c.u, 1.4, HP[1] + 21), V(HP[0] + 2, 1.1, HP[1] + 15.4));
       const s = city(c, { ...BLACKOUT, focus: [HP[0], HP[1] + 16, 15], feat: [0, 1, 2, 3, 4].map((i) => ({ kind: "pj", i, pos: [HP[0] + i * 0.9, 0, HP[1] + 15 + i % 2 * 0.7], snap: true, ry: 0.3 - i * 0.2, pose: i === 4 ? "hug" : "shiver", ph: i })) });
-      s.flashlight(0, [HP[0] + 8, 2.2, HP[1] + 21], [HP[0] + 2, 1, HP[1] + 15], 0.4, 12);
+      s.flashlight(0, [HP[0] + 8, 2.2, HP[1] + 21], [HP[0] + 2, 1, HP[1] + 15], 0.2, 12);
       grade(c, "cold");
       dof(c, 5.5, 0.6);
     });
@@ -42935,9 +42958,9 @@ void main(){
     cue(T("ruptured gas pipes"), "hiss", { dur: 3, gain: 0.5 });
     S(T("ruptured gas pipes"), (c) => {
       c.cam.fov = 32;
-      c.look(V(HP[0] + 14, 1.2, HP[1] + 10), V(HP[0] + 9.5, 1, HP[1] + 12));
+      c.look(V(-4, 1.6, 21.5), V(3.5, 1, 18.5));
       const s = city(c, { ...BLACKOUT, gas: true, focus: [HP[0] + 9, HP[1] + 12, 15] });
-      s.flashlight(0, [HP[0] + 6, 2, HP[1] + 17], [HP[0] + 9.5, 0.8, HP[1] + 12], 0.5, 8);
+      s.flashlight(0, [-1, 1.9, 23], [2.8, 0.7, 18.6], 0.3, 6);
       grade(c, "night");
       dof(c, 6, 0.6);
     });
@@ -42953,7 +42976,7 @@ void main(){
       c.cam.fov = 32;
       c.look(V(HP[0] + 2.8, 1.7, HP[1] + 15.5), V(HP[0], 2.5, HP[1] + 4));
       const s = city(c, { ...BLACKOUT, focus: [HP[0], HP[1] + 10, 25], feat: [{ kind: "pj", i: 0, pos: [HP[0] + 1.6, 0, HP[1] + 13.6], snap: true, ry: Math.PI + 0.2, pose: "stand" }] });
-      s.flashlight(0, [HP[0] + 1.2, 1.4, HP[1] + 12.6], [HP[0], 3.5, HP[1] + 5], 0.5, 16);
+      s.flashlight(0, [HP[0] + 1.2, 1.4, HP[1] + 12.6], [HP[0], 3.5, HP[1] + 5], 0.25, 16);
       grade(c, "night");
       dof(c, 3.8, 0.5);
     });
@@ -43057,7 +43080,7 @@ void main(){
       const s = city(c, { ...BLACKOUT, rubbleLights: true, focus: [HP[0], HP[1] + 10, 12] });
       s.points[0].position.set(HP[0] + 0.5, Math.max(0.6, yU - 1.2), HP[1] + 10.5);
       s.points[0].color.set(10469631);
-      s.points[0].intensity = 6 + 3 * Math.sin(c.t * 1.7);
+      s.points[0].intensity = 22 + 8 * Math.sin(c.t * 1.7);
       grade(c, "night", { saturation: 0.5 });
       dof(c, 3.5, 0.8);
       fadeOut(c, 0.4);
@@ -43067,19 +43090,19 @@ void main(){
     S(T("by daylight drone"), (c) => {
       c.cam.fov = 44;
       c.look(V(-20 + c.u * 30, 150, 10 + c.u * 10), V(-20 + c.u * 30, 0, 9 + c.u * 10));
-      city(c, { ...RUINS_DAY, excavators: true, rescuers: true, emergency: true, focus: [0, 0, 120] });
+      city(c, { ...RUINS_DAY, haze: 0.3, fogMul: 0.8, excavators: true, rescuers: true, emergency: true, focus: [0, 0, 120] });
       grade(c, "grey");
     });
     S(T("helicopter footage"), (c) => {
       c.cam.fov = 40;
       c.look(V(80, 60, 120), V(0, 10, 0));
-      city(c, { ...RUINS_DAY, excavators: true, rescuers: true, emergency: true, heli: { t0: c.shot.t0, from: [-60, 45, 40], dir: [1, 0.35], speed: 22 }, focus: [0, 0, 120] });
+      city(c, { ...RUINS_DAY, excavators: true, rescuers: true, emergency: true, heli: { t0: c.shot.t0, from: [-60, 45, 40], dir: [1, 0.35], speed: 22 }, haze: 0.3, fogMul: 0.8, focus: [0, 0, 120] });
       grade(c, "grey");
     });
     S(T("reveals the scale"), (c) => {
       orbit(c, V(0, 0, 0), 260, 160, 0.3, 0.5);
       c.cam.fov = 40;
-      city(c, { ...RUINS_DAY, focus: [0, 0, 200] });
+      city(c, { ...RUINS_DAY, haze: 0.3, fogMul: 0.8, focus: [0, 0, 200] });
       grade(c, "grey");
     });
     cue(T("but the disaster has already"), "music", { mood: "tension", dur: 24 });
@@ -43110,7 +43133,7 @@ void main(){
     const sec = { t0: TP("buildings that had barely survived") - 0.5 };
     S(tAgain, (c) => {
       c.cam.fov = 36;
-      c.look(V(HP[0] + 20, 6, HP[1] + 24), V(HP[0], 3, HP[1] + 4));
+      c.look(V(HP[0] + 20, 6, HP[1] + 22), V(HP[0], 3, HP[1] + 4));
       city(c, { ...RUINS_DAY, rescuers: true, survivors: true, haze: 0.8 + c.lt * 0.2, second: { ...sec, amp: 0.8 }, focus: [HP[0], HP[1], 40] });
       c.shake(1.3);
       grade(c, "grey");
@@ -43166,10 +43189,10 @@ void main(){
       const b = s0.secondBuilding || s0.hero;
       const p = b.position;
       c.cam.fov = 34;
-      c.look(V(p.x + 12, 2, p.z + 14), V(p.x, 3, p.z));
-      city(c, { ...RUINS_DAY, haze: 1.2, second: { ...sec }, focus: [p.x, p.z, 30] });
-      grade(c, "grey", { saturation: 0.6 });
-      dof(c, 14, 0.4);
+      c.look(V(16.5, 3, -21 + c.u), V(p.x, 4, p.z));
+      city(c, { ...RUINS_DAY, haze: 0.5, second: { ...sec }, focus: [p.x, p.z, 30] });
+      grade(c, "grey", { saturation: 0.7 });
+      dof(c, 28, 0.3);
     });
     S(T("and some of the first rescuers"), (c) => {
       c.cam.fov = 32;
@@ -43182,14 +43205,14 @@ void main(){
     S(T("huge cracks split the roads"), (c) => {
       const b = c.use("block");
       c.cam.fov = 36;
-      c.look(V(1.5, 1.6, 15 - c.u * 6), V(0.2, 0, -6));
-      b.update(c.t, { S: 15, snap: 1, trace: 0.2 });
-      grade(c, "grey", { saturation: 0.85 });
-      dof(c, 10, 0.3);
+      c.look(V(1.2 - c.u * 0.8, 4.2, 7.5 - c.u * 0.6), V(-1.2, 0, -0.8));
+      b.update(c.t, { S: 15, snap: 1, trace: 0.5 });
+      grade(c, "grey", { saturation: 0.9 });
+      dof(c, 8, 0.4);
     });
     S(T("bridges have collapsed"), (c) => {
       c.cam.fov = 38;
-      c.look(V(-64, 7, 149), V(-112, 6, 156));
+      c.look(V(-62 - c.u * 3, 5, 150), V(-106, 6, 154));
       city(c, { ...RUINS_DAY, snow: 0.4, focus: [-110, 154, 60] });
       grade(c, "grey");
     });
@@ -43203,7 +43226,7 @@ void main(){
     });
     S(T("but damaged highways"), (c) => {
       c.cam.fov = 38;
-      c.look(V(60, 2.4, 22), V(20, 1.5, 22));
+      c.look(V(60, 3, 25), V(10, 2, 26.5));
       city(c, { ...RUINS_DAY, tod: "dawnGrey", snow: 1.2, emergency: true, focus: [30, 22, 40] });
       grade(c, "cold");
     });
@@ -43221,13 +43244,16 @@ void main(){
       infoCold(g, c.lt, c.dur);
     });
     S(T("people pinned beneath concrete"), (c) => {
-      const yP = c.sets.city.surfaceAt(HP[0], HP[1] + 4);
+      const yP = c.sets.city.surfaceAt(HP[0] + 1.6, HP[1] + 11);
       c.cam.fov = 32;
-      c.look(V(HP[0] + 3.5, yP + 2.2, HP[1] + 9.5 - c.u), V(HP[0], yP + 0.2, HP[1] + 4));
-      const s = city(c, { ...BLACKOUT, snow: 1, rubbleLights: true, focus: [HP[0], HP[1] + 5, 15] });
-      s.flashlight(0, [HP[0] + 5, yP + 3, HP[1] + 10], [HP[0], yP, HP[1] + 4], 0.35, 10);
+      c.look(V(HP[0] + 5.8 - c.u * 0.8, yP + 1.7, HP[1] + 14.2 - c.u * 0.6), V(HP[0] + 1.2, yP + 0.5, HP[1] + 10.4));
+      const s = city(c, { ...BLACKOUT, snow: 1, rubbleLights: true, focus: [HP[0], HP[1] + 10, 15], feat: [{ kind: "resc", i: 4, pos: [HP[0] + 1.9, 0, HP[1] + 11.6], snap: true, ry: Math.PI + 0.5, pose: "dig" }] });
+      s.flashlight(0, [HP[0] + 1.8, yP + 1.6, HP[1] + 11.2], [HP[0] + 0.8, yP - 0.4, HP[1] + 9.6], 0.3, 4);
+      s.points[0].position.set(HP[0] + 0.8, Math.max(0.6, yP - 1), HP[1] + 9.8);
+      s.points[0].color.set(10469631);
+      s.points[0].intensity = 18 + 6 * Math.sin(c.t * 1.3);
       grade(c, "cold", { saturation: 0.7 });
-      dof(c, 6, 0.6);
+      dof(c, 5, 0.6);
     });
     S(T("in syria no aid"), (c) => {
       c.cam.fov = 38;
@@ -43320,12 +43346,25 @@ void main(){
       dof(c, 2.6, 1);
     });
     S(T("they find teenagers"), (c) => {
-      const m = c.use("macro");
-      c.cam.fov = 26;
-      c.look(V(1.2, 2.4, 4.6 - c.u * 0.6), V(0, 1.6, 0));
-      m.update(c.t, { prop: "concrete", crumble: 0, drip: true, key: 340, keyColor: 14083327 });
-      grade(c, "cold");
-      dof(c, 4.6, 1);
+      c.cam.fov = 34;
+      c.look(V(HP[0] + 10 - c.u, 3, HP[1] + 17.5), V(HP[0] + 2, 2.2, HP[1] + 11));
+      const s = city(c, {
+        ...RUINS_DAY,
+        tod: "dawnGrey",
+        emergency: true,
+        focus: [HP[0], HP[1] + 12, 25],
+        feat: [
+          { kind: "resc", i: 1, pos: [HP[0] + 1.5, 0, HP[1] + 10.5 + c.lt * 0.35], snap: true, ry: 0.1, pose: "carry" },
+          { kind: "resc", i: 2, pos: [HP[0] + 3.4, 0, HP[1] + 11.6], snap: true, ry: -0.4, pose: "point" },
+          { kind: "resc", i: 5, pos: [HP[0] - 0.4, 0, HP[1] + 11.2], snap: true, ry: 0.5, pose: "wave" },
+          ...[0, 1, 2, 3].map((i) => ({ kind: "day", i, pos: [HP[0] - 3.5 + i * 1.1, 0.18, HP[1] + 15 + i % 2 * 0.6], ry: Math.PI + 0.3 + (i - 1.5) * 0.15, pose: i % 2 ? "point" : "stand" }))
+        ]
+      });
+      s.points[0].position.set(HP[0] + 3, 8, HP[1] + 14);
+      s.points[0].color.set(16765082);
+      s.points[0].intensity = 40;
+      grade(c, "warm", { saturation: 0.95 });
+      dof(c, 9, 0.4);
     });
     S(T("but these are rare exceptions"), (c) => {
       orbit(c, V(0, 0, 0), 140, 60, 4.5, 4.7);
@@ -43341,7 +43380,7 @@ void main(){
     cue(T("heavy excavators"), "excavator", { dur: 7, gain: 0.5 });
     S(T("heavy excavators"), (c) => {
       c.cam.fov = 38;
-      c.look(V(28, 7, 17), V(6, 2, 27));
+      c.look(V(34, 7, 26), V(6, 2, 27));
       city(c, { ...RUINS_DAY, excavators: true, emergency: true, rescuers: true, focus: [10, 25, 40] });
       grade(c, "grey");
     });

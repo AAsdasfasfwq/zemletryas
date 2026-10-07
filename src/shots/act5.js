@@ -105,7 +105,7 @@ export function act5(D) {
   S(tDev, (c) => { orbit(c, V(0, 0, 0), 120, 70, 0.9, 1.05); c.cam.fov = 40; city(c, { ...QN, quake: Q(c), focus: [0, 0, 100] }); c.shake(0.9); grade(c, 'night'); });
   S(T('the ground lurches'), (c) => { c.cam.fov = 40; c.look(V(30, 1.8, 22), V(-10, 4, 22)); c.cam.position.x += Math.sin(c.t * 7) * 0.6; city(c, { ...QN, quake: Q(c), alarmCar: true, focus: [10, 22, 40] }); c.shake(2.0, 6); grade(c, 'night'); });
   S(T('pavement and soil ripple'), (c) => { c.cam.fov = 44; c.look(V(22.5, 2.6, 78 - c.u * 4), V(22, 0, 28)); city(c, { ...QN, quake: Q(c), ripple: 0.55, focus: [-6, 30, 40] }); c.shake(1.0, 6); grade(c, 'night'); });
-  S(T('concrete apartment buildings never designed'), (c) => { c.cam.fov = 30; c.look(V(-2, 0.6, 30), V(-18, 30, -10)); city(c, { ...QN, quake: Q(c), focus: [-10, 0, 60] }); c.shake(0.8); grade(c, 'night'); });
+  S(T('concrete apartment buildings never designed'), (c) => { c.cam.fov = 30; c.look(V(-2, 0.6, 28), V(-18, 30, -10)); city(c, { ...QN, quake: Q(c), focus: [-10, 0, 60] }); c.shake(0.8); grade(c, 'night'); });
   S(T('the motion builds'), (c) => { c.cam.fov = 34; c.look(V(23, 7, 24), V(-6.5, 14, 6.5)); city(c, { ...QN, quake: Q(c), focus: [-6, 6, 40] }); c.shake(1.0); grade(c, 'night'); });
   cue(T('where support columns have been removed'), 'glass', { gain: 0.6 });
   S(T('where support columns have been removed'), (c) => { c.cam.fov = 34; c.look(V(-2, 1.4, 19), V(-6.5, 1.6, 12)); city(c, { ...QN, quake: Q(c), colsRemoved: 3, colGhost: 0.8 + 0.2 * Math.sin(c.t * 20), focus: [-6, 10, 30] }); c.shake(1.2, 8); grade(c, 'night', { saturation: 1.1 }); });

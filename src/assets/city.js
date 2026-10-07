@@ -249,6 +249,11 @@ export class CitySet {
       const sm = smokeStream({ origin: [x, y0 + 5 * sc, z], count: 50, seed: 160 + k, height: 45, size: [5, 24], life: 14, color: [0.07, 0.065, 0.06], opacity: 0.7, wind: [1.5, 0, 0.4] }); this.bigFires.add(sm);
       if (k < 6) { const L = new THREE.PointLight(0xff7a30, 0, 110, 1.5); L.position.set(x, y0 + 4 * sc, z); L.userData.base = 420 * sc; this.bigFires.add(L); f.userData.light = L; }
     });
+    { // burning car at the roadblock under the broken overpass
+      const f = fireStream({ origin: [-96, 0.8, 150], radius: 1.2, height: 3.5, count: 80, seed: 177, scale: 2.6 }); this.bigFires.add(f);
+      const L = new THREE.PointLight(0xff7a30, 0, 70, 1.5); L.position.set(-96, 3, 150); L.userData.base = 160; this.bigFires.add(L);
+      const wreck = makeCar(977, { color: '#2a2622' }); wreck.position.set(-96, 0, 150); wreck.rotation.y = 0.7; this.bigFires.add(wreck);
+    }
     this.smokeCols = new THREE.Group(); this.after.add(this.smokeCols);
     for (let k = 0; k < 7; k++) { const a = fr.next() * TAU, rad = 40 + fr.next() * 140; const sm = smokeStream({ origin: [Math.cos(a) * rad, 2, Math.sin(a) * rad], count: 60, seed: 90 + k, height: 50, size: [6, 28], life: 16, color: [0.22, 0.21, 0.2], opacity: 0.6, wind: [1.5, 0, 0.4] }); this.smokeCols.add(sm); }
     // haze puffs that hang over the ruins (dust in the air)
@@ -302,7 +307,8 @@ export class CitySet {
     // collapsed overpass on the outskirts
     this.overpass = new THREE.Group(); this.overpass.position.set(-2.5 * P, 0, 3.5 * P); this.after.add(this.overpass);
     const cm2 = mat('#a9a49a', { rough: 0.95 });
-    for (const x of [-30, 0, 30]) { this.overpass.add(box(2.2, 9, 3, cm2, x, 4.5, 0)); this.overpass.add(box(4, 1, 12, cm2, x, 9.3, 0)); }
+    for (const x of [-30, 0]) { this.overpass.add(box(2.2, 9, 3, cm2, x, 4.5, 0)); this.overpass.add(box(4, 1, 12, cm2, x, 9.3, 0)); }
+    { const stub = box(2.2, 3.2, 3, cm2, 30, 1.6, 0); stub.rotation.z = 0.12; this.overpass.add(stub); const cap = box(4, 1, 12, cm2, 33, 0.5, 2); cap.rotation.set(0.1, 0.3, 0.5); this.overpass.add(cap); } // the snapped pier
     const d1 = box(30, 1.4, 12, cm2, -15, 10.4, 0); this.overpass.add(d1);
     const d2 = box(31, 1.4, 12, cm2, 15, 5.2, 0); d2.rotation.z = -0.35; this.overpass.add(d2);
     this.overpass.add(box(30, 0.8, 0.4, mat('#d0cbc0'), -15, 11.4, 5.8)); shadowAll(this.overpass);
@@ -503,7 +509,7 @@ export class CitySet {
     // explosion
     this.boom.visible = !!o.boom; if (o.boom) { const b = o.boom; const tau = t - b.t0; this.boom.position.set(...b.pos); this.boomFire.setTime(tau); this.boomSmoke.setTime(tau); this.boomSparks.setTime(tau);
       const fl = tau < 0 ? 0 : Math.exp(-tau * 2.5); this.boomGlow.scale.setScalar(10 + fl * 120 * (b.size || 1)); this.boomGlow.material.opacity = tau < 0 ? 0 : clamp(fl * 1.5 + 0.1); this.boomGlow.position.y = 3; this.boomLight.intensity = tau < 0 ? 0 : fl * 4e4 * (b.size || 1); this.boomLight.position.y = 4; }
-    this.gas.visible = !!o.gas; this.gas.material.uniforms.uTime.value = t;
+    const nightGas = tod === "blackout"; this.gas.opacity = nightGas ? 0.3 : 0.55; this.gas.material.uniforms.uColor.value.setRGB(...(nightGas ? [0.2, 0.21, 0.24] : [0.9, 0.92, 0.95])); this.gas.visible = !!o.gas; this.gas.material.uniforms.uTime.value = t;
     this.poleSparks.visible = o.poleSparks !== undefined; if (this.poleSparks.visible) this.poleSparks.setTime(o.poleSparks);
     this.rubbleLights.visible = !!o.rubbleLights && destroyed; this.rubbleLights.opacity = 0.5 + 0.5 * Math.sin(t * 2);
     if (this.alarmCar) { const on = !!o.alarmCar && Math.floor(t * 2.5) % 2 === 0; this.alarmCar.userData.headMat.color.setRGB(1, 0.7, 0.2).multiplyScalar(on ? 6 : 0.6); this.alarmCar.userData.tailMat.color.setRGB(1, 0.45, 0.05).multiplyScalar(on ? 6 : 0.5); }
