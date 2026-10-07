@@ -57,8 +57,23 @@ function chromeArgs() {
 }
 async function launch() {
   const o = { headless: HEADFUL ? false : 'new', args: chromeArgs(), defaultViewport: { width: W, height: H, deviceScaleFactor: 1 }, protocolTimeout: 0 };
-  if (CHROME) o.executablePath = CHROME;
+  const exe = CHROME || findChrome(); if (exe) o.executablePath = exe;
   return puppeteer.launch(o);
+}
+// puppeteer's own Chrome first; if it was not downloaded, fall back to an installed Chrome/Chromium
+function findChrome() {
+  try { const p = puppeteer.executablePath(); if (p && fs.existsSync(p)) return null; } catch (e) { /* not downloaded */ }
+  const c = [
+    'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
+    process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, 'Google/Chrome/Application/chrome.exe'),
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/Applications/Chromium.app/Contents/MacOS/Chromium',
+    '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium', '/usr/bin/chromium-browser',
+  ].filter(Boolean);
+  const pw = process.env.PLAYWRIGHT_BROWSERS_PATH || '/opt/pw-browsers';
+  try { for (const d of fs.readdirSync(pw)) if (/^chromium-\d+/.test(d)) c.push(path.join(pw, d, 'chrome-linux/chrome')); } catch (e) { /* none */ }
+  const hit = c.find((p) => { try { return fs.existsSync(p); } catch (e) { return false; } });
+  if (hit) console.log('using browser', hit);
+  return hit || null;
 }
 async function openPage(browser, port) {
   const page = await browser.newPage();
