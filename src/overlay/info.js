@@ -33,7 +33,7 @@ export function drift(g, p, d, { zoom = 0.04, cx = 960, cy = 540 } = {}) {
 }
 // editorial header: italic serif kicker + big bold word(s)
 export function header(g, p, x, y, kicker, big, { color = INK, accent = RED, size = 150, align = 'center', bigColor = null, delay = 0 } = {}) {
-  if (kicker) revealText(g, kicker, x, y - size * 0.62, { family: FONT.serif, style: 'italic', weight: '400', size: size * 0.32, color: MUTED, p: p - delay, stagger: 0.02, from: 'up', dist: 16, align });
+  if (kicker) revealText(g, kicker, x, y - size * 0.8, { family: FONT.serif, style: 'italic', weight: '400', size: size * 0.32, color: MUTED, p: p - delay, stagger: 0.02, from: 'up', dist: 16, align });
   revealText(g, big, x, y, { family: FONT.sans, weight: '900', size, color: bigColor || color, p: p - 0.15 - delay, stagger: 0.045, dur: 0.5, from: 'right', dist: 60, align, tracking: -2 });
 }
 export function counter(p, d0, d1, v0, v1, e = ease.outExpo) { return lerp(v0, v1, e(clamp((p - d0) / (d1 - d0)))); }

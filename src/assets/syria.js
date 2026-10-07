@@ -79,6 +79,9 @@ export class SyriaSet {
     this.ruinPeople = []; for (let k = 0; k < 8; k++) { const p = new Person(800 + k, { coat: r.pick(['#4a3f35', '#3a3a40', '#5a4a3a']) }); p.position.set((r.next() - 0.5) * 30, 0, (r.next() - 0.5) * 10); p.rotation.y = r.next() * TAU; this.ruins.add(p); this.ruinPeople.push(p); }
     this.whiteHelmets = []; for (let k = 0; k < 8; k++) { const p = new Person(850 + k, { helmet: '#f4f4f4', coat: '#3a3a3a', headlamp: true }); p.position.set(-6 + (k % 4) * 3 + r.next(), 1.2 + r.next(), 10 + Math.floor(k / 4) * 2); p.rotation.y = r.next() * TAU; this.ruins.add(p); this.whiteHelmets.push(p); p.visible = false; }
 
+    // the pile the White Helmets dig in; rescuers stand on its surface
+    this.digPile = makeRubble({ count: 170, radius: 6.5, height: 2.6, seed: 913, colors: ['#c9b48e', '#b59e78', '#a38c68', '#d8c4a0', '#8a7a62'] }); this.digPile.position.set(-1.5, 0, 10.5); this.ruins.add(this.digPile);
+    this.digPile.updateMatrixWorld(true); { const rc = new THREE.Raycaster(); this.whiteHelmets.forEach((p) => { let y = 0; for (const [dx, dz] of [[0, 0], [0.3, 0], [-0.3, 0], [0, 0.3], [0, -0.3]]) { rc.set(new THREE.Vector3(p.position.x + dx, 30, p.position.z + dz), new THREE.Vector3(0, -1, 0)); const h = rc.intersectObject(this.digPile, true)[0]; if (h) y = Math.max(y, h.point.y); } p.position.y = y; }); }
     // flood light on a tripod + small generator (lights the night dig), fires in the rubble
     this.rig = new THREE.Group(); this.rig.position.set(5, 0, 16); this.ruins.add(this.rig); this.rig.visible = false;
     const rigM = mat('#2b2e33', { metal: 0.6, rough: 0.5 });
@@ -152,10 +155,11 @@ export class SyriaSet {
     for (const b of this.barrels) { const on = !!o.fires; b.f.visible = b.sm.visible = on; b.f.material.uniforms.uTime.value = t; b.sm.material.uniforms.uTime.value = t; b.L.intensity = on ? 22 + Math.sin(t * 11 + b.g.id) * 5 : 0; b.kids.forEach((p) => p.pose('shiver', t)); }
     for (const p of this.campPeople) p.pose(p.userData.walk ? 'walk' : 'shiver', t);
     for (const p of this.ruinPeople) p.pose('walk', t);
+    this.digPile.visible = !!o.helmets || !!o.after;
     this.whiteHelmets.forEach((p, k) => { p.visible = !!o.helmets; if (p.visible) p.pose(k % 3 === 0 ? 'carry' : 'dig', t); });
     this.haze.visible = o.haze !== false; this.haze.setTime(10 + t * 0.02); this.haze.material.uniforms.uColor.value.setRGB(...(mood === 'dusty' ? [0.85, 0.75, 0.6] : mood === 'stormNight' ? [0.12, 0.125, 0.14] : [0.45, 0.47, 0.52]));
     // night rescue in the Aleppo ruins: generator flood light + burning rubble
-    const nightRescue = mood === 'stormNight' && !!o.after; this.rig.visible = nightRescue; this.flood.intensity = nightRescue ? 380 : 0; this.floodHead.material.color.setScalar(nightRescue ? 6 : 0.3);
+    const nightRescue = mood === 'stormNight' && !!o.after; this.rig.visible = nightRescue; this.flood.intensity = nightRescue ? 160 : 0; this.floodHead.material.color.setScalar(nightRescue ? 6 : 0.3);
     this.ruinFires.visible = nightRescue; this.ruinFires.children.forEach((c) => { if (c.material && c.material.uniforms && c.material.uniforms.uTime) c.material.uniforms.uTime.value = t; if (c.isPointLight) c.intensity = nightRescue ? c.userData.base * (0.85 + 0.15 * Math.sin(t * 9 + c.id)) : 0; });
     this.megaDust.visible = o.megaDust !== undefined; if (this.megaDust.visible) this.megaDust.setTime(o.megaDust);
   }

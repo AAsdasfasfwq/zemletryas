@@ -300,7 +300,7 @@ export class CitySet {
     for (let k = 0; k < 3; k++) { const h = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.45, 0.9, 12, 1, true), mat('#d9dde2', { metal: 0.5, rough: 0.3, side: THREE.DoubleSide })); h.rotation.z = Math.PI / 2; h.rotation.y = k * TAU / 3; h.position.set(Math.cos(k * TAU / 3) * 0.5, 8.6, -Math.sin(k * TAU / 3) * 0.5); this.siren.add(h); }
     shadowAll(this.siren);
     // collapsed overpass on the outskirts
-    this.overpass = new THREE.Group(); this.overpass.position.set(-2.5 * P, 0, 3.5 * P + 6); this.after.add(this.overpass);
+    this.overpass = new THREE.Group(); this.overpass.position.set(-2.5 * P, 0, 3.5 * P); this.after.add(this.overpass);
     const cm2 = mat('#a9a49a', { rough: 0.95 });
     for (const x of [-30, 0, 30]) { this.overpass.add(box(2.2, 9, 3, cm2, x, 4.5, 0)); this.overpass.add(box(4, 1, 12, cm2, x, 9.3, 0)); }
     const d1 = box(30, 1.4, 12, cm2, -15, 10.4, 0); this.overpass.add(d1);
@@ -325,8 +325,8 @@ export class CitySet {
     this.alarmCar = this.parked[3];
     // volumetric flashlight beams (paired with the spot lights)
     this.beams = this.spots.map(() => { const m = new THREE.Mesh(new THREE.ConeGeometry(1, 1, 32, 1, true), new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, uniforms: { a: { value: 0 }, color: { value: new THREE.Color(1, 0.95, 0.85) } },
-      vertexShader: 'varying float vY; varying vec3 vN; varying vec3 vV; void main(){ vY = position.y; vN = normalize(normalMatrix*normal); vec4 mv = modelViewMatrix*vec4(position,1.0); vV = normalize(-mv.xyz); gl_Position = projectionMatrix*mv; }',
-      fragmentShader: 'uniform float a; uniform vec3 color; varying float vY; varying vec3 vN; varying vec3 vV; void main(){ float along = clamp(0.5 - vY, 0.0, 1.0); float edge = pow(abs(dot(vN, vV)), 1.5); gl_FragColor = vec4(color * a * (1.0 - along) * (1.0-along) * edge * 0.16, 1.0); }' })); m.visible = false; m.frustumCulled = false; s.add(m); return m; });
+      vertexShader: 'varying float vY; varying float vD; varying vec3 vN; varying vec3 vV; void main(){ vY = position.y; vN = normalize(normalMatrix*normal); vec4 mv = modelViewMatrix*vec4(position,1.0); vV = normalize(-mv.xyz); vD = -mv.z; gl_Position = projectionMatrix*mv; }',
+      fragmentShader: 'uniform float a; uniform vec3 color; varying float vY; varying float vD; varying vec3 vN; varying vec3 vV; void main(){ float along = clamp(0.5 - vY, 0.0, 1.0); float edge = pow(abs(dot(vN, vV)), 1.5); float near = smoothstep(0.6, 3.5, vD) * smoothstep(0.0, 0.1, along); gl_FragColor = vec4(color * a * (1.0 - along) * (1.0-along) * edge * near * 0.16, 1.0); }' })); m.visible = false; m.frustumCulled = false; s.add(m); return m; });
     // shot-controlled characters for close-ups
     this.featured = { day: [], pj: [], resc: [] };
     for (let k = 0; k < 6; k++) { const p = new Person(2000 + k, { coat: k % 2 ? '#6b4a3a' : null }); p.visible = false; s.add(p); this.featured.day.push(p); }
@@ -378,6 +378,19 @@ export class CitySet {
     L.position.set(...pos); L.target.position.set(...target); L.intensity = 150 * k; L.angle = 0.28; L.penumbra = 0.6; L.distance = 60; L.decay = 1.6; L.castShadow = false;
     const P = new THREE.Vector3(...pos), Tg = new THREE.Vector3(...target); const dir = Tg.clone().sub(P).normalize();
     b.visible = k > 0; b.scale.set(len * 0.29, len, len * 0.29); b.position.copy(P).addScaledVector(dir, len / 2); b.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), dir); b.material.uniforms.a.value = k;
+  }
+  // top of the rubble / collapsed slabs at (x,z), 0 on open ground; used to stand people on the piles
+  surfaceAt(x, z) {
+    const key = x.toFixed(2) + ',' + z.toFixed(2); if (!this._surf) this._surf = new Map(); if (this._surf.has(key)) return this._surf.get(key);
+    if (!this._rc) { this._rc = new THREE.Raycaster(); this._rc.far = 120; }
+    this.hero.setState('pancake', 999, {}); this.scene.updateMatrixWorld(true); // aftermath geometry (deterministic, cached)
+    const targets = this.rubbles.concat([this.hero]); let best = 0;
+    for (const [dx, dz] of [[0, 0], [0.35, 0], [-0.35, 0], [0, 0.35], [0, -0.35]]) {
+      this._rc.set(new THREE.Vector3(x + dx, 80, z + dz), new THREE.Vector3(0, -1, 0));
+      const h = this._rc.intersectObjects(targets, true).find((q) => q.object.visible !== false);
+      if (h) best = Math.max(best, h.point.y);
+    }
+    this._surf.set(key, best); return best;
   }
   setShadowFocus(x, z, radius = 60) {
     const L = this.sun; L.target.position.set(x, 0, z); L.position.set(x + this.sunDir.x * 300, this.sunDir.y * 300, z + this.sunDir.z * 300);
@@ -452,13 +465,14 @@ export class CitySet {
       this.rescueCrane.visible = !!o.excavators; if (o.excavators) poseCrane(this.rescueCrane, t, 1.0);
       this.emergency.forEach((v) => { v.visible = !!o.emergency; flashBeacons(v, t, 1); });
       this.ambulanceCrushed.visible = true; flashBeacons(this.ambulanceCrushed, t, o.crushedBeacon !== undefined ? o.crushedBeacon : 0.4);
+      if (!this._rescSnapped) { this._rescSnapped = true; for (const p of this.rescuers) p.position.y = this.surfaceAt(p.userData.spot[0], p.userData.spot[1]); }
       for (const p of this.rescuers) { p.visible = !!o.rescuers; if (p.visible) p.pose(p.seed % 3 === 0 ? 'carry' : 'dig', t); }
       for (const p of this.survivors) { p.visible = !!o.survivors; if (p.visible) p.pose(p.seed % 4 === 0 ? 'cry' : p.seed % 4 === 1 ? 'phone' : 'shiver', t); }
       this.fires.visible = !!o.fires; this.fires.children.forEach((c) => { if (c.material && c.material.uniforms && c.material.uniforms.uTime) c.material.uniforms.uTime.value = t; if (c.userData.light) c.userData.light.intensity = o.fires ? 25 + Math.sin(t * 13 + c.id) * 6 : 0; });
       this.bigFires.visible = !!o.fires; if (o.fires) this.bigFires.children.forEach((c) => { if (c.material && c.material.uniforms && c.material.uniforms.uTime) c.material.uniforms.uTime.value = t; if (c.isPointLight) c.intensity = c.userData.base * (0.85 + 0.15 * Math.sin(t * 9 + c.id) * Math.sin(t * 5.3 + c.id * 2)); if (c.isSprite) c.material.opacity = 0.5 + 0.08 * Math.sin(t * 7 + c.id); });
       this.smokeCols.visible = !!o.smoke; this.smokeCols.children.forEach((c) => (c.material.uniforms.uTime.value = t));
     }
-    this.haze.visible = (o.haze || 0) > 0; if (this.haze.visible) { this.haze.material.uniforms.uTime.value = 10 + t * 0.02; this.haze.opacity = o.haze * 0.5; this.haze.material.uniforms.uColor.value.setRGB(...(o.hazeColor || [0.7, 0.68, 0.63])); }
+    this.haze.visible = (o.haze || 0) > 0; if (this.haze.visible) { this.haze.material.uniforms.uTime.value = 10 + t * 0.02; this.haze.opacity = Math.min(0.6, o.haze * 0.42); this.haze.material.uniforms.uColor.value.setRGB(...(o.hazeColor || [0.7, 0.68, 0.63])); }
     for (const p of this.laterPeople) p.pose('walk', t);
     // birds
     const birdsOn = o.birds; this.birds.forEach((b, k) => {
@@ -477,7 +491,7 @@ export class CitySet {
     this.mountains.visible = o.mountains !== false;
     // featured characters: o.feat = [{kind:'day'|'pj'|'resc', i, pos:[x,y,z], ry, pose, k}]
     for (const arr of Object.values(this.featured)) for (const p of arr) p.visible = false;
-    if (o.feat) for (const f of o.feat) { const p = this.featured[f.kind || 'day'][f.i || 0]; if (!p) continue; p.visible = true; p.position.set(...f.pos); p.rotation.y = f.ry || 0; p.pose(f.pose || 'stand', t + (f.ph || 0), f.k || {}); if (f.walk) { p.position.x += Math.cos(f.ry - Math.PI / 2) * 0; const d = (t - (f.walk.t0 || 0)) * (f.walk.v || 1.3); p.position.x += Math.sin(f.ry || 0) * d; p.position.z += Math.cos(f.ry || 0) * d; } }
+    if (o.feat) for (const f of o.feat) { const p = this.featured[f.kind || 'day'][f.i || 0]; if (!p) continue; p.visible = true; p.position.set(...f.pos); if (f.snap) p.position.y = this.surfaceAt(f.pos[0], f.pos[2]) + (f.pos[1] || 0); p.rotation.y = f.ry || 0; p.pose(f.pose || 'stand', t + (f.ph || 0), f.k || {}); if (f.walk) { p.position.x += Math.cos(f.ry - Math.PI / 2) * 0; const d = (t - (f.walk.t0 || 0)) * (f.walk.v || 1.3); p.position.x += Math.sin(f.ry || 0) * d; p.position.z += Math.cos(f.ry || 0) * d; } }
     // ripple
     this.ripple.visible = (o.ripple || 0) > 0; this.rippleU.uT.value = t; this.rippleU.uAmp.value = o.ripple || 0;
     // hero columns: o.cols = number removed (0..6), o.colGhost highlight

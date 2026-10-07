@@ -26,9 +26,9 @@ export function act3(D) {
   S(T('are bustling'), (c) => { c.cam.fov = 40; c.look(V(30 - c.u * 6, 1.6, 22.5), V(-20, 3, 21)); c.handheld(0.8); city(c, { ...GOLD, traffic: 1.4, focus: [10, 22, 40] }); grade(c, 'golden'); dof(c, 14, 0.3); });
   S(T('this is a prosperous'), (c) => { orbit(c, V(0, 0, 0), 170, 95, -0.7, -0.45); c.cam.fov = 38; city(c, { ...GOLD, focus: [0, 0, 140] }); grade(c, 'golden'); });
   S(T('new neighborhoods'), (c) => { c.cam.fov = 38; dolly(c, V(60, 6, 80), V(66, 10, 72), V(86, 30, 44), V(86, 36, 44)); city(c, { ...GOLD, construction: 0.55 + c.u * 0.3, focus: [86, 44, 60] }); grade(c, 'golden'); });
-  S(T('attractive apartment towers'), (c) => { c.cam.fov = 34; dolly(c, V(78, 2, -4), V(76, 5, -6), V(48, 12, -40), V(46, 58, -42)); city(c, { ...GOLD, focus: [40, -48, 50] }); grade(c, 'golden'); c.post.bloomStrength = 0.9; });
+  S(T('attractive apartment towers'), (c) => { c.cam.fov = 34; dolly(c, V(66, 2, -14), V(65, 5, -16), V(46, 12, -42), V(44, 56, -44)); city(c, { ...GOLD, focus: [40, -48, 50] }); grade(c, 'golden'); c.post.bloomStrength = 0.9; });
   cue(T('advertisements promise'), 'pop', {});
-  S(T('advertisements promise'), (c) => { c.cam.fov = 34; push(c, V(24, 10.5, 16), V(-16, -6, 17), 0.35); city(c, { ...GOLD, focus: [20, 16, 40] }); grade(c, 'golden'); dof(c, 18, 0.25); });
+  S(T('advertisements promise'), (c) => { c.cam.fov = 34; push(c, V(24, 10.5, 16), V(-14, -6, 10), 0.35); city(c, { ...GOLD, focus: [20, 16, 40] }); grade(c, 'golden'); dof(c, 18, 0.25); });
   S(T('built to modern earthquake'), (c) => { c.cam.fov = 26; c.look(V(14 + c.u, 9.5, 24), V(26, 10.2, 14)); city(c, { ...GOLD, focus: [20, 16, 40] }); grade(c, 'golden');
     const g = c.use2D(); INFO.tag(g, c.lt - 0.4, 1420, 860, 'EARTHQUAKE STANDARDS?', { size: 34, bg: 'rgba(216,49,47,0.85)' }); });
   S(T('people drink tea'), (c) => { const m = c.use('macro'); c.cam.fov = 28; c.look(V(2.4 - c.u * 0.6, 2.4, 4.8), V(0, 1.4, 0)); m.update(c.t, { prop: 'tea', key: 220, keyColor: 0xffd6a0 }); grade(c, 'golden'); dof(c, 5.2, 1.0); });
@@ -116,5 +116,5 @@ export function act3(D) {
     const g = c.use2D(); INFO.tag(g, c.lt - 1.2, 560, 860, 'SUPPORT COLUMNS REMOVED', { size: 34, bg: 'rgba(216,49,47,0.85)' }); });
   S(T('to make room for supermarkets'), (c) => { c.cam.fov = 36; c.look(V(-6.5 + c.u * 2, 2.0, 20), V(-6.5, 2.4, 12)); city(c, { tod: 'golden', windows: 0.6, focus: [-6, 10, 30], colsRemoved: 3 }); grade(c, 'warm'); });
   cue(T('the trap was set'), 'boomLow', { gain: 0.6 });
-  S(T('the trap was set'), (c) => { c.cam.fov = 26; push(c, V(-6.5, 12, 6.5), V(16, -10.5, 34), 0.3, ease.inOutCubic); city(c, { tod: 'winterDusk', windows: 0.7, lamps: 1, traffic: 0.2, people: 'none', focus: [-6, 6, 40], colsRemoved: 3 }); grade(c, 'cold', { saturation: 0.8 }); fadeOut(c, 0.4); });
+  S(T('the trap was set'), (c) => { c.cam.fov = 26; push(c, V(-6.5, 12, 6.5), V(28.5, -10, 15.5), 0.3, ease.inOutCubic); city(c, { tod: 'winterDusk', windows: 0.7, lamps: 1, traffic: 0.2, people: 'none', focus: [-6, 6, 40], colsRemoved: 3 }); grade(c, 'cold', { saturation: 0.8 }); fadeOut(c, 0.4); });
 }

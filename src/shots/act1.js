@@ -26,7 +26,7 @@ export function act1(D) {
   S(T('unshakable', -0.05), (c) => { dolly(c, V(60, 30, -250), V(40, 45, -320), V(0, 220, -1400), V(0, 250, -1500)); c.cam.fov = 36; city(c, { ...GOLD, focus: [0, -200, 300] }); grade(c, 'golden'); });
   S(T('to us mountains are eternal'), (c) => { dolly(c, V(-40, 70, 160), V(-20, 120, 60), V(60, 260, -1500), V(80, 330, -1600)); c.cam.fov = 40; city(c, { ...GOLD, focus: [0, -100, 300], mountains: true, fogMul: 0.22 }); grade(c, 'golden'); });
   S(T('the earth is a dependable'), (c) => { const g = c.use('globe'); c.cam.fov = 30; c.look(V(0, 3, 34 - c.u * 3), V(0, 0, 0)); g.update(c.t, { spin: -35 + c.lt * 1.5, tilt: 18, camera: c.cam, sunDir: [0.9, 0.3, 0.4] }); grade(c, 'space'); });
-  S(T('our homes'), (c) => { push(c, V(-6, 14, 6.5), V(24, 6, 42), 0.25); c.cam.fov = 35; city(c, { ...GOLD, windows: 0.25, focus: [-6, 6, 40] }); grade(c, 'golden'); });
+  S(T('our homes'), (c) => { push(c, V(-6, 14, 6.5), V(28, 10, 16), 0.25); c.cam.fov = 38; city(c, { ...GOLD, windows: 0.25, focus: [-6, 6, 40] }); grade(c, 'golden'); });
   S(T('our cities'), (c) => { orbit(c, V(0, 0, -20), 230, 140, 2.2, 2.45); c.cam.fov = 40; city(c, { ...GOLD, focus: [0, 0, 160] }); grade(c, 'golden'); });
   S(T('our entire civilization'), (c) => { const g = c.use('globe'); c.cam.fov = 30; c.look(V(-6, 6, 28 - c.u * 2), V(0, 1, 0)); g.update(c.t, { spin: 10 + c.lt * 2, tilt: 20, camera: c.cam, sunDir: [-0.2, 0.2, -1], night: 3.5 }); grade(c, 'space'); });
   cue(T('but on a planetary scale'), 'swell', { dur: 6, gain: 0.5 });

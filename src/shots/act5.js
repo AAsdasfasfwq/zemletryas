@@ -115,7 +115,7 @@ export function act5(D) {
   S(T('floor after floor'), (c) => { c.cam.fov = 34; c.look(V(-6.5 + 20, 34, 6.5 + 26), V(-6.5, 6, 6.5)); city(c, { ...QN, quake: Q(c), focus: [-6, 6, 40] }); c.shake(0.8); grade(c, 'night'); });
   cue(T('crushing everything'), 'impact', { gain: 0.9 });
   S(T('crushing everything'), (c) => { c.cam.fov = 40; c.look(V(2, 1.7, 22 + c.lt * 0.5), V(-6.5, 2, 8)); city(c, { ...QN, quake: Q(c), focus: [-6, 10, 30] }); c.shake(1.2); grade(c, 'night'); dof(c, 6, 0.5); });
-  S(T('inside that grinding mass'), (c) => { c.cam.fov = 30; c.look(V(-3 + c.u, 2.0, 15 - c.u * 2), V(-6.5, 0.8, 6.5)); city(c, { ...QN, quake: Q(c), haze: 0.6, hazeColor: [0.3, 0.29, 0.28], focus: [-6, 8, 30] }); c.shake(0.6); grade(c, 'night', { saturation: 0.6 }); dof(c, 6, 0.8); });
+  S(T('inside that grinding mass'), (c) => { c.cam.fov = 30; c.look(V(-1 + c.u, 2.0, 19 - c.u * 1.5), V(-6.5, 3, 10)); city(c, { ...QN, quake: Q(c), haze: 0.6, hazeColor: [0.3, 0.29, 0.28], focus: [-6, 8, 30] }); c.shake(0.6); grade(c, 'night', { saturation: 0.6 }); dof(c, 6, 0.8); });
   cue(T('concrete made with cheap sea sand'), 'crumble', { gain: 0.6 });
   S(T('concrete made with cheap sea sand'), (c) => { const m = c.use('macro'); c.cam.fov = 30; dolly(c, V(5, 3.5, 7), V(3.5, 2.6, 5.5), V(0, 1, 0), V(0, 0.8, 0.5)); m.update(c.t, { prop: 'concrete', crumble: smooth(c.lt / 2.2), key: 280, keyColor: 0xcfd8ff }); c.shake(0.15); grade(c, 'cold'); dof(c, 6, 0.6); });
   // liquefaction
@@ -126,9 +126,9 @@ export function act5(D) {
     c.cam.fov = 30; c.look(V(p.x + 9, 1.2, p.z + 12), V(p.x + 2, 0.2, p.z + 6)); city(c, { ...QN, quake: Q(c), mud: true, focus: [p.x, p.z, 30] }); c.shake(1.0, 7); grade(c, 'night'); dof(c, 9, 0.5); });
   cue(tTip + 2.5, 'thud', { gain: 1.0 });
   S(tTip, (c) => { const s = c.sets.city; const tb = s.buildings.find((b) => b.fate === 'tip') || s.hero; const p = tb.position; s.mud.position.set(p.x, 0.2, p.z); s.mud.scale.setScalar(1);
-    c.cam.fov = 40; c.look(V(p.x - 40 * tb.tipDir, 8, p.z + 40), V(p.x + 6 * tb.tipDir, 8, p.z)); city(c, { ...QN, quake: Q(c), mud: true, focus: [p.x, p.z, 50] }); c.shake(0.7); grade(c, 'night'); });
+    c.cam.fov = 40; c.look(V(p.x - 40 * tb.tipDir, 8, 156), V(p.x + 6 * tb.tipDir, 8, p.z)); city(c, { ...QN, quake: Q(c), mud: true, focus: [p.x, p.z, 50] }); c.shake(0.7); grade(c, 'night'); });
   S(tSink, (c) => { const s = c.sets.city; const sb = s.buildings.find((b) => b.fate === 'sink') || s.hero; const p = sb.position; s.mud.position.set(p.x, 0.2, p.z); s.mud.scale.setScalar(1);
-    c.cam.fov = 36; c.look(V(p.x + 22, 4, p.z + 26), V(p.x, 6, p.z)); city(c, { ...QN, quake: Q(c), mud: true, focus: [p.x, p.z, 50] }); c.shake(0.7); grade(c, 'night'); });
+    c.cam.fov = 36; c.look(V(-154, 4, 110), V(p.x, 6, p.z)); city(c, { ...QN, quake: Q(c), mud: true, focus: [p.x, p.z, 50] }); c.shake(0.7); grade(c, 'night'); });
   // Syria
   const SQ0 = tSyr - 1.5; const samp = (t) => quakeAmp(t, SQ0, { rise: 1.5, hold: 30, decay: 8, peak: 1 });
   cue(tSyr, 'collapse', { gain: 0.8 });

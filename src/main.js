@@ -21,7 +21,7 @@ if (RENDER) { // in render mode the canvas must occupy exactly W x H CSS pixels 
   canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
 }
 const director = new Director(canvas, { scale, samples: parseInt(params.get('samples') || '4', 10) });
-window.director = director;
+window.director = director; window.THREE = THREE;
 window.totalDuration = Math.round(DURATION * 1000);
 window.videoGaps = GAPS.map((g) => ({ at: g.at, dur: g.dur }));
 window.voiceDuration = VOICE_DURATION;

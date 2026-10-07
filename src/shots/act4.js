@@ -47,11 +47,11 @@ export function act4(D) {
   S(T('in turkish cities residents shut'), (c) => { const r = c.use('room'); c.cam.fov = 34; dolly(c, V(0.2, 1.5, 0.5), V(0.9, 1.5, -1.0), V(1.75, 1.5, -3), V(1.75, 1.5, -3)); r.update(c.t, { room: 'living', tv: 'weather', family: 'sit' }); grade(c, 'warm'); dof(c, 2.2, 0.5); });
   S(T('and turn up their heaters'), (c) => { const r = c.use('room'); c.cam.fov = 28; c.look(V(2.6, 0.7, -1.2), V(3.0, 0.5, -2.4)); r.update(c.t, { room: 'living', tv: 'weather', family: 'tea' }); grade(c, 'warm'); dof(c, 1.2, 1.0); });
   S(T('the cold keeps millions indoors'), (c) => { orbit(c, V(0, 0, 0), 120, 55, 0.4, 0.6); c.cam.fov = 40; city(c, { ...NIGHT_SNOW, focus: [0, 0, 120] }); grade(c, 'night'); });
-  S(T('each evening in those same'), (c) => { c.cam.fov = 30; push(c, V(-6.5, 14, 6.5), V(10, -6, 36), 0.25); city(c, { ...NIGHT_SNOW, focus: [-6, 6, 40], colsRemoved: 3 }); grade(c, 'night'); });
+  S(T('each evening in those same'), (c) => { c.cam.fov = 38; push(c, V(-6.5, 14, 6.5), V(0.5, -10, 20.5), 0.25); city(c, { ...NIGHT_SNOW, focus: [-6, 6, 40], colsRemoved: 3 }); grade(c, 'night'); });
   // 24 hours before
   card(D, T('24 hours before the earthquake'), '24 HOURS BEFORE', 'SUNDAY, FEBRUARY 5, 2023');
   cue(T('the weather is miserable'), 'bed', { type: 'rain', dur: 9, gain: 0.6 });
-  S(T('the weather is miserable'), (c) => { c.cam.fov = 38; c.look(V(-14 + c.u * 3, 6, 34), V(10, 3, 20)); city(c, { ...NIGHT_RAIN, focus: [0, 20, 50] }); grade(c, 'night'); });
+  S(T('the weather is miserable'), (c) => { c.cam.fov = 38; c.look(V(-14 + c.u * 3, 6, 27.5), V(10, 3, 18)); city(c, { ...NIGHT_RAIN, focus: [0, 20, 50] }); grade(c, 'night'); });
   S(T('freezing rain mixes'), (c) => { c.cam.fov = 28; c.look(V(20, 1.2, 31), V(15.5, 4.5, 18)); city(c, { ...NIGHT_RAIN, snow: 0.7, focus: [16, 20, 30] }); grade(c, 'night'); dof(c, 13, 0.4); });
   S(T('streets empty earlier'), (c) => { c.cam.fov = 40; dolly(c, V(-60, 2.2, 22), V(-50, 2.4, 22), V(60, 3, 22), V(60, 3, 22)); city(c, { ...NIGHT_RAIN, traffic: 0, focus: [-20, 22, 60] }); grade(c, 'night'); });
   S(T('people head home'), (c) => { c.cam.fov = 36; c.look(V(-14, 1.8, 19), V(0, 1.6, 14.5)); city(c, { ...NIGHT_RAIN, traffic: 0.3, focus: [-8, 14, 30], feat: [{ kind: 'day', i: 5, pos: [-12 + 0, 0.18, 14.3], ry: Math.PI / 2, pose: 'walk', walk: { t0: c.shot.t0, v: 1.3 } }, { kind: 'day', i: 2, pos: [-13.2, 0.18, 13.6], ry: Math.PI / 2, pose: 'walk', walk: { t0: c.shot.t0, v: 1.3 } }] }); grade(c, 'night'); dof(c, 11, 0.4); });
@@ -59,7 +59,7 @@ export function act4(D) {
   S(T('eat dinner'), (c) => { const r = c.use('room'); c.cam.fov = 38; dolly(c, V(-0.4, 1.7, 1.8), V(-0.2, 1.6, 1.5), V(1.7, 0.8, 0.3), V(1.7, 0.8, 0.3)); r.update(c.t, { room: 'living', tv: 'news', family: 'tea' }); grade(c, 'warm'); dof(c, 2.4, 0.5); });
   S(T('watch television'), (c) => { const r = c.use('room'); c.cam.fov = 40; c.look(V(-1.3, 1.3, 3.2 - c.u * 0.3), V(-1.3, 1.0, -2.6)); r.update(c.t, { room: 'living', tv: 'weather', family: 'sit' }); grade(c, 'warm'); });
   S(T('and put their children to bed'), (c) => { const r = c.use('room'); c.cam.fov = 40; dolly(c, V(14 + 1.6, 1.6, 2.0), V(14 + 1.3, 1.5, 1.6), V(14 - 0.8, 0.6, 0.0), V(14 - 0.8, 0.6, 0.0)); r.update(c.t, { room: 'kids', parentPose: 'stand' }); grade(c, 'warm'); dof(c, 2.3, 0.5); });
-  S(T('a new work week'), (c) => { c.cam.fov = 34; c.look(V(36, 18, 48), V(-6, 12, 6)); const k = 0.9 - c.u * 0.6; city(c, { ...NIGHT_SNOW, windows: k, focus: [-6, 6, 50] }); grade(c, 'night'); });
+  S(T('a new work week'), (c) => { c.cam.fov = 34; c.look(V(48, 16, 24), V(-6, 12, 6)); const k = 0.9 - c.u * 0.6; city(c, { ...NIGHT_SNOW, windows: k, focus: [-6, 6, 50] }); grade(c, 'night'); });
   cue(T('there are no sirens'), 'silence', {});
   S(T('there are no sirens'), (c) => { c.cam.fov = 30; c.look(V(-2.5 + c.u * 0.5, 2, 24), V(8.5, 8.4, 15.1)); city(c, { ...NIGHT_SNOW, windows: 0.3, focus: [6, 22, 30] }); grade(c, 'night', { saturation: 0.8 }); dof(c, 14, 0.4); });
   S(T('science cannot predict'), (c) => { const l = c.use('lab'); c.cam.fov = 38; c.look(V(4, 2.2, 4), V(-1, 1.6, -3)); l.update(c.t, { area: 'centre', alarm: 0 }); l.desks.forEach((p) => (p.visible = false)); grade(c, 'cold'); });

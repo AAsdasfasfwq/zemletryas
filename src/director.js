@@ -76,6 +76,7 @@ export class Director {
       project: (v) => { const p = v.clone().project(cam); return { x: (p.x * 0.5 + 0.5) * 1920, y: (-p.y * 0.5 + 0.5) * 1080, behind: p.z > 1 }; },
     };
     shot.fn(c);
+    if (window.__camOverride) { const o = window.__camOverride; cam.fov = o.fov || cam.fov; cam.position.set(...o.pos); cam.up.set(...(o.up || [0, 1, 0])); cam.lookAt(...o.target); P.focus = 0; P.aperture = 0; } // QA hook
     // transitions (whip/flash/dip) around cuts
     for (const tr of this.transitions) {
       const d = t - tr.t; if (Math.abs(d) > tr.len) continue;
