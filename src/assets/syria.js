@@ -159,7 +159,7 @@ export class SyriaSet {
     this.whiteHelmets.forEach((p, k) => { p.visible = !!o.helmets; if (p.visible) p.pose(k % 3 === 0 ? 'carry' : 'dig', t); });
     this.haze.visible = o.haze !== false; this.haze.setTime(10 + t * 0.02); this.haze.material.uniforms.uColor.value.setRGB(...(mood === 'dusty' ? [0.85, 0.75, 0.6] : mood === 'stormNight' ? [0.12, 0.125, 0.14] : [0.45, 0.47, 0.52]));
     // night rescue in the Aleppo ruins: generator flood light + burning rubble
-    const nightRescue = mood === 'stormNight' && !!o.after; this.rig.visible = nightRescue; this.flood.intensity = nightRescue ? 160 : 0; this.floodHead.material.color.setScalar(nightRescue ? 6 : 0.3);
+    const nightRescue = mood === 'stormNight' && !!o.after; this.rig.visible = nightRescue; this.flood.intensity = nightRescue ? 90 : 0; this.floodHead.material.color.setScalar(nightRescue ? 6 : 0.3);
     this.ruinFires.visible = nightRescue; this.ruinFires.children.forEach((c) => { if (c.material && c.material.uniforms && c.material.uniforms.uTime) c.material.uniforms.uTime.value = t; if (c.isPointLight) c.intensity = nightRescue ? c.userData.base * (0.85 + 0.15 * Math.sin(t * 9 + c.id)) : 0; });
     this.megaDust.visible = o.megaDust !== undefined; if (this.megaDust.visible) this.megaDust.setTime(o.megaDust);
   }
