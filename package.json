@@ -1,0 +1,25 @@
+{
+  "name": "zemletryas-2023",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Procedural 3D documentary video (Turkey-Syria earthquake 2023) rendered with three.js + Web Audio, exported via Puppeteer",
+  "scripts": {
+    "build": "node tools/build.js",
+    "watch": "node tools/build.js --watch",
+    "serve": "node tools/serve.js",
+    "render": "node render.js"
+  },
+  "dependencies": {
+    "puppeteer": "^24.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "three": "0.170.0",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2",
+    "@fontsource/bebas-neue": "^5.0.0",
+    "@fontsource/inter": "^5.0.0",
+    "@fontsource/playfair-display": "^5.0.0",
+    "@fontsource/jetbrains-mono": "^5.0.0"
+  }
+}

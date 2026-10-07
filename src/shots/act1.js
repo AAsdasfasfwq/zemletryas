@@ -1,0 +1,141 @@
+// INTRO (planet, plates, mantle) + "20 MILLION YEARS BEFORE" (plates, faults, strain)
+import * as THREE from 'three';
+import { T, TE } from '../timing.js';
+import { V, dolly, orbit, path, push, grade, dof, fadeIn, fadeOut } from './dsl.js';
+import { GOLD, city, mapSet, mp, card } from './common.js';
+import { ease, clamp, lerp, smooth, noise1, lerpV } from '../engine/util.js';
+import { FONT, revealText } from '../overlay/overlay.js';
+import * as INFO from '../overlay/info.js';
+import { CITIES, mx, mz } from '../assets/regionmap.js';
+
+export function act1(D) {
+  const { S, whip, flash, dip, cue, zoom } = D;
+  // ---------------------------------------------------------------- INTRO
+  cue(0, 'bed', { type: 'city', dur: 14, gain: 0.5 });
+  cue(0, 'music', { mood: 'calm', dur: 60 });
+  S(0, (c) => { // feet on the pavement, golden hour
+    const x = -38 + c.lt * 1.3; c.cam.fov = 30;
+    c.look(V(x, 0.42, -15.4), V(x + 4, 0.35, -13.9)); c.handheld(0.5);
+    city(c, { ...GOLD, focus: [x, -14, 20], feat: [0, 1, 2].map((i) => ({ kind: 'day', i, pos: [-36.2 + i * 1.6, 0.18, [-14.1, -13.2, -14.6][i]], ry: Math.PI / 2, pose: 'walk', ph: i * 0.4, walk: { t0: 0, v: 1.3 } })) });
+    grade(c, 'golden'); dof(c, 3.4, 0.9, 16); fadeIn(c, 1.2);
+  });
+  S(T('solid'), (c) => { // massive low angle on a building corner
+    const b = c.sets.city.hero; c.cam.fov = 28; dolly(c, V(7, 0.6, 22), V(5.5, 0.9, 21), V(-6, 26, 4), V(-6, 30, 4)); city(c, { ...GOLD, focus: [-6, 6, 40] }); grade(c, 'golden'); });
+  cue(T('stable', -0.05), 'thud', { gain: 0.25 });
+  S(T('stable', -0.05), (c) => { orbit(c, V(0, 0, 0), 150, 85, 0.6, 0.75); c.cam.fov = 38; city(c, { ...GOLD, focus: [0, 0, 120] }); grade(c, 'golden'); });
+  S(T('unshakable', -0.05), (c) => { dolly(c, V(60, 30, -250), V(40, 45, -320), V(0, 220, -1400), V(0, 250, -1500)); c.cam.fov = 36; city(c, { ...GOLD, focus: [0, -200, 300] }); grade(c, 'golden'); });
+  S(T('to us mountains are eternal'), (c) => { dolly(c, V(-40, 70, 160), V(-20, 120, 60), V(60, 260, -1500), V(80, 330, -1600)); c.cam.fov = 40; city(c, { ...GOLD, focus: [0, -100, 300], mountains: true, fogMul: 0.22 }); grade(c, 'golden'); });
+  S(T('the earth is a dependable'), (c) => { const g = c.use('globe'); c.cam.fov = 30; c.look(V(0, 3, 34 - c.u * 3), V(0, 0, 0)); g.update(c.t, { spin: -35 + c.lt * 1.5, tilt: 18, camera: c.cam, sunDir: [0.9, 0.3, 0.4] }); grade(c, 'space'); });
+  S(T('our homes'), (c) => { push(c, V(-6, 14, 6.5), V(24, 6, 42), 0.25); c.cam.fov = 35; city(c, { ...GOLD, windows: 0.25, focus: [-6, 6, 40] }); grade(c, 'golden'); });
+  S(T('our cities'), (c) => { orbit(c, V(0, 0, -20), 230, 140, 2.2, 2.45); c.cam.fov = 40; city(c, { ...GOLD, focus: [0, 0, 160] }); grade(c, 'golden'); });
+  S(T('our entire civilization'), (c) => { const g = c.use('globe'); c.cam.fov = 30; c.look(V(-6, 6, 28 - c.u * 2), V(0, 1, 0)); g.update(c.t, { spin: 10 + c.lt * 2, tilt: 20, camera: c.cam, sunDir: [-0.2, 0.2, -1], night: 3.5 }); grade(c, 'space'); });
+  cue(T('but on a planetary scale'), 'swell', { dur: 6, gain: 0.5 });
+  S(T('but on a planetary scale', -0.1), (c) => { const g = c.use('globe'); c.cam.fov = 28; c.look(V(0, 2, 26 + c.u * 14), V(0, 0, 0)); g.update(c.t, { spin: -60 + c.lt * 2, tilt: 15, camera: c.cam, cracks: c.lt > 3 ? 1 : 0, crackIntensity: 0.15 + 0.15 * Math.sin(c.t * 9) }); grade(c, 'space'); });
+  S(T('we live on a thin shell'), (c) => { const g = c.use('globe'); c.cam.fov = 28; dolly(c, V(19, 12, 15), V(14, 9.5, 11), V(6, 6.5, 2), V(6.6, 7.0, 1.2)); g.update(c.t, { spin: 0, tilt: 0, camera: c.cam, cutaway: true, clouds: 0, mantleGlow: 0.1 });
+    const gg = c.use2D(); const pt = c.project(V(7.0, 7.0, 0.3)); INFO.callout(gg, c.lt - 0.6, pt, 'CRUST', 'a thin shell of cooled rock', { side: -1, len: 220, rise: 120 }); grade(c, 'space'); dof(c, 9, 0.3); });
+  cue(T("and that shell isn't"), 'crackle', { dur: 5, gain: 0.35 });
+  S(T("and that shell isn't", -0.05), (c) => { const g = c.use('globe'); c.cam.fov = 30; orbit(c, V(0, 0, 0), 30, 8, 1.1, 1.35); g.update(c.t, { spin: 30, tilt: 10, camera: c.cam, cracks: ease.inOutCubic(c.lt / 4.2), crackIntensity: 1.2 }); grade(c, 'space'); });
+  S(T('it is broken into enormous'), (c) => { const g = c.use('globe'); c.cam.fov = 30; dolly(c, V(-22, 14, 18), V(-18, 10, 22), V(0, 0, 0), V(0, 0, 0)); g.update(c.t, { spin: 80 + c.lt * 3, tilt: 25, camera: c.cam, cracks: 1, crackIntensity: 1.4 + Math.sin(c.t * 3) * 0.2, clouds: 0.4 }); grade(c, 'space'); });
+  S(T('tectonic plates'), (c) => { const g = c.use('globe'); c.cam.fov = 30; c.look(V(0, 6, 30 - c.u * 4), V(0, 0, 0)); g.update(c.t, { spin: 140 + c.lt * 3, tilt: 20, camera: c.cam, cracks: 1, crackIntensity: 1.6, clouds: 0.3, sunDir: [0.5, 0.4, 0.7] });
+    const gg = c.use2D(); revealText(gg, 'TECTONIC PLATES', 960, 900, { family: FONT.sans, weight: '900', size: 78, color: '#fff', p: c.lt, tracking: 18, from: 'up', alpha: clamp((c.dur - c.lt) / 0.3) }); grade(c, 'space'); });
+  // eggshell & soup metaphors
+  cue(T('picture a cracked eggshell'), 'crackle', { dur: 2.5, gain: 0.5 });
+  S(T('picture a cracked eggshell', -0.05), (c) => { const m = c.use('macro'); c.cam.fov = 30; dolly(c, V(0, 2.2, 6.5), V(0, 1.9, 5.2), V(0, 1.45, 0), V(0, 1.4, 0)); m.update(c.t, { prop: 'egg', p: ease.inOutCubic((c.lt - 0.2) / 1.6), glow: smooth((c.lt - 0.8) / 1) * 1.5 }); grade(c, 'macro'); dof(c, 5.5, 1.2, 18); });
+  S(T('or slabs of ice'), (c) => { const m = c.use('macro'); c.cam.fov = 38; c.look(V(1.5 - c.u * 2, 14 - c.u * 3, 4 - c.u), V(0, 3.3, 0)); m.update(c.t, { prop: 'pot', bokeh: false, key: 150 }); grade(c, 'hell'); dof(c, 11, 0.4); });
+  cue(T('that soup is'), 'lava', { dur: 8, gain: 0.45 });
+  S(T('that soup is'), (c) => { const g = c.use('globe'); c.cam.fov = 30; dolly(c, V(21, 6, 21), V(17, 4, 17), V(2, 0, 2), V(2.5, -0.5, 2.5)); g.update(c.t, { spin: 0, tilt: 0, camera: c.cam, cutaway: true, clouds: 0, mantleGlow: 0.4 + c.u * 0.5 });
+    const gg = c.use2D(); const pt = c.project(V(5.5, -5.0, 0.2)); INFO.callout(gg, c.lt - 0.5, pt, 'MANTLE', 'intensely hot, slowly churning rock', { side: 1, len: 220, rise: 110 }); grade(c, 'hell'); });
+  S(T('heat from deep inside'), (c) => { const g = c.use('globe'); c.cam.fov = 34; dolly(c, V(12, 2, 12), V(10, 0, 10.5), V(2, -2, 2), V(2, -3, 2)); g.update(c.t, { spin: 0, tilt: 0, camera: c.cam, cutaway: true, clouds: 0, mantleGlow: 1.0, atmo: false }); grade(c, 'hell'); });
+  // plates on the mantle
+  S(T('keeps those enormous slabs'), (c) => { const p = c.use('plates'); c.cam.fov = 38; orbit(c, V(0, 0, 0), 70, 32, -0.9, -0.6); p.update(c.t, { mode: 'drift', p: c.u }); grade(c, 'hell'); dof(c, 70, 0.3); });
+  cue(T('they collide'), 'impact', { gain: 0.6 });
+  S(T('they collide'), (c) => { const p = c.use('plates'); c.cam.fov = 34; dolly(c, V(10, 9, 26), V(6, 6, 20), V(0, 0, 0), V(0, 1, 0)); p.update(c.t, { mode: 'collide', p: 0.55 + c.u * 0.45, impactT: c.lt - 0.3, mountMax: 0.8 }); c.shake(c.lt > 0.3 && c.lt < 1.2 ? 0.8 : 0.1); grade(c, 'hell'); });
+  cue(T('grind past'), 'grind', { dur: 1.8, gain: 0.5 });
+  S(T('grind past'), (c) => { const p = c.use('plates'); c.cam.fov = 32; c.look(V(-6 + c.u * 4, 7, 14), V(0, 0, 0)); p.update(c.t, { mode: 'grind', p: c.u, mount: 0.2 }); c.shake(0.25); grade(c, 'hell'); dof(c, 16, 0.5); });
+  S(T('and pull apart'), (c) => { const p = c.use('plates'); c.cam.fov = 36; c.look(V(0, 28 - c.u * 4, 18), V(0, 0, 0)); p.update(c.t, { mode: 'apart', p: ease.outCubic(c.u * 1.2) }); grade(c, 'hell'); });
+  S(T('they move just an inch'), (c) => { const g = c.only2D(); INFO.infoInchYear(g, c.lt, c.dur); });
+  cue(T('they move just an inch'), 'pop', {});
+  S(T('that hardly sounds threatening'), (c) => { const p = c.use('plates'); c.cam.fov = 40; orbit(c, V(0, 0, 0), 90, 45, 0.3, 0.5); p.update(c.t, { mode: 'drift', p: 0.2 + c.u * 0.1 }); grade(c, 'hell', { saturation: 1.05 }); });
+  cue(T('but when continents'), 'riser', { dur: 4.2, gain: 0.5 });
+  S(T('but when continents'), (c) => { const g = c.only2D(); INFO.infoTons(g, c.lt, c.dur); });
+  cue(T('tons collide') + 0.35, 'boom', { gain: 0.8 });
+  S(T('collide even'), (c) => { const p = c.use('plates'); c.cam.fov = 34; dolly(c, V(-34, 9, 36), V(-27, 12, 31), V(0, 2, 0), V(0, 3, 0)); p.update(c.t, { mode: 'collide', p: 0.62 + c.u * 0.3, impactT: c.lt, mountMax: 1.2 }); c.shake(c.lt < 1 ? 1.2 : 0.3); grade(c, 'hell'); });
+  S(T('to raise mountains'), (c) => { const p = c.use('plates'); c.cam.fov = 34; c.look(V(-26 + c.u * 6, 8 + c.u * 4, 30), V(0, 4, 0)); p.update(c.t, { mode: 'collide', p: 1, mount: 0.6 + c.u * 0.8 }); c.shake(0.35); grade(c, 'hell'); dof(c, 38, 0.3); });
+  cue(T('and wipe out cities'), 'collapse', { gain: 0.6 });
+  S(T('and wipe out cities'), (c) => { // flash-forward: a building pancakes in the night
+    c.cam.fov = 34; c.look(V(16, 3, 30), V(-6, 12, 6)); const s = city(c, { tod: 'night', windows: 0.3, lamps: 1, snowCover: 1, snow: 0.6, traffic: 0, people: 'none', quake: { t0: c.shot.t0 - 30.2, amp: () => 1 }, focus: [-6, 6, 40] });
+    c.shake(1.3); grade(c, 'night'); c.post.saturation = 0.7;
+  });
+  // ---------------------------------------------------------------- 20 MILLION YEARS BEFORE
+  card(D, T('20 million years before'), '20 MILLION YEARS BEFORE', 'THE SLOW COLLISION');
+  cue(T('the enormous arabian plate', -0.1), 'music', { mood: 'map', dur: 92 });
+  S(T('the enormous arabian plate', -0.1), (c) => { c.cam.fov = 40; dolly(c, V(10, 230, 170), V(8, 170, 120), V(5, 0, 10), V(10, 0, 20)); const k = smooth(c.lt / 1.2);
+    mapSet(c, { plates: [k, 0, 0, 0], focus: [0, 0, 160] }); grade(c, 'map');
+    const g = c.use2D(); INFO.tag(g, c.lt - 0.4, c.project(mp(42, 29, 3)).x, c.project(mp(42, 29, 3)).y, 'ARABIAN PLATE', { size: 40 }); });
+  cue(T('begins its relentless push'), 'grind', { dur: 3, gain: 0.35 });
+  S(T('begins its relentless push'), (c) => { c.cam.fov = 38; dolly(c, V(40, 70, 130), V(30, 50, 95), V(25, 0, 30), V(20, 0, 10)); mapSet(c, { plates: [1, 0, 0, 0], arrows: { arabia: ease.inOutCubic(c.lt / 2.2) }, focus: [20, 30, 100] }); grade(c, 'map');
+    const g = c.use2D(); const p = c.project(mp(40.0, 34.5, 6)); INFO.tag(g, c.lt - 1.5, p.x + 160, p.y, 'NORTH ↑', { size: 30 }); });
+  S(T('in its path lies'), (c) => { c.cam.fov = 38; dolly(c, V(-10, 110, 90), V(-30, 95, 75), V(-20, 0, -5), V(-35, 0, -10)); const k = smooth((c.lt - 0.8) / 1);
+    mapSet(c, { plates: [1, k, 0, 0], arrows: { arabia: 1, arabia_a: 0.6 }, focus: [-25, 0, 110] }); grade(c, 'map');
+    const g = c.use2D(); const p = c.project(mp(33, 38.8, 3)); INFO.tag(g, c.lt - 1.2, p.x, p.y, 'ANATOLIAN PLATE', { size: 40 }); });
+  S(T('which today carries most of turkey'), (c) => { c.cam.fov = 36; dolly(c, V(-35, 75, 70), V(-40, 70, 62), V(-35, 0, -5), V(-38, 0, -8)); mapSet(c, { plates: [0.6, 1, 0, 0], borders: smooth(c.lt / 0.8), focus: [-35, 0, 90] }); grade(c, 'map');
+    const g = c.use2D(); const p = c.project(mp(34.5, 39.3, 2)); INFO.tag(g, c.lt - 0.6, p.x, p.y, 'TÜRKİYE', { size: 54, bg: 'rgba(0,0,0,0)', tracking: 18 }); });
+  S(T('to the north the vast eurasian'), (c) => { c.cam.fov = 40; dolly(c, V(-10, 150, 30), V(-5, 170, 10), V(-5, 0, -50), V(0, 0, -70)); const k = smooth(c.lt / 1);
+    mapSet(c, { plates: [0.5, 0.8, k, 0], borders: 0.6, focus: [0, -40, 160] }); grade(c, 'map');
+    const g = c.use2D(); const p = c.project(mp(36, 45.5, 3)); INFO.tag(g, c.lt - 0.9, p.x, p.y, 'EURASIAN PLATE', { size: 40 }); });
+  cue(T('stands firm'), 'impact', { gain: 0.35 });
+  S(T('stands firm'), (c) => { c.cam.fov = 38; dolly(c, V(20, 60, 60), V(15, 52, 50), V(5, 0, -40), V(5, 0, -45)); mapSet(c, { plates: [0.5, 0.8, 1, 0], arrows: { eurasia: ease.outBack(c.lt / 1.2) }, borders: 0.4, focus: [5, -30, 90] }); grade(c, 'map'); });
+  cue(T('turkey is caught in a vice'), 'squeeze', { dur: 2.2, gain: 0.5 });
+  S(T('turkey is caught in a vice'), (c) => { c.cam.fov = 40; c.look(V(-5, 165 - c.u * 25, 70 - c.u * 15), V(-8, 0, 0)); const pulse = 0.5 + 0.5 * Math.sin(c.lt * 9);
+    mapSet(c, { plates: [1, 0.7 + pulse * 0.3, 1, 0], arrows: { arabia: 1, eurasia: 1 }, borders: 0.3, focus: [0, 0, 150] }); grade(c, 'map'); c.post.uvZoom = 1 + Math.sin(c.lt * 9) * 0.004; c.shake(0.15); });
+  S(T('imagine squeezing a watermelon seed'), (c) => { const m = c.use('macro'); c.cam.fov = 30; dolly(c, V(0, 2.4, 9), V(0, 1.9, 7.2), V(0, 1.3, 0), V(0, 1.25, 0)); m.update(c.t, { prop: 'seed', squeeze: ease.inOutCubic(c.u) * 0.7 }); grade(c, 'macro'); dof(c, 7.2, 1.1); });
+  const applyT = T('apply enough pressure');
+  const shoot = T('shoots out sideways');
+  cue(shoot, 'zip', { gain: 0.6 });
+  S(applyT, (c) => { const m = c.use('macro'); const st = c.t - shoot; c.cam.fov = 30;
+    if (st < 0) c.look(V(2.2, 2.4, 6.2), V(0, 1.3, 0)); else c.look(V(4.5 - st * 2, 2.6 + st * 1.5, 6.5), V(0, 1.3 - st, -Math.min(st * 9, 12)));
+    m.update(c.t, { prop: 'seed', squeeze: st < 0 ? 0.7 + 0.3 * ease.inQuad(1 + st / 2.5) : 1, shoot: st > 0 ? st * 0.55 : undefined }); if (st < 0) c.shake(0.05 + 0.15 * (1 + st / 2.5)); grade(c, 'macro'); dof(c, st < 0 ? 5.5 : 7, 0.9); if (Math.abs(st) < 0.12) c.post.zoomBlur = 0.15; });
+  S(T('that is what is happening to turkey'), (c) => { c.cam.fov = 38; dolly(c, V(-20, 120, 100), V(-30, 110, 85), V(-20, 0, 0), V(-28, 0, 0)); mapSet(c, { plates: [0.6, 1, 0.6, 0], borders: 0.3, arrows: { anatolia: ease.inOutCubic(c.lt / 1.6) }, focus: [-20, 0, 140] }); grade(c, 'map'); });
+  S(T('arabia pushes from the south'), (c) => { c.cam.fov = 36; c.look(V(30, 60 - c.u * 6, 120), V(25, 0, 30)); mapSet(c, { plates: [1, 0.5, 0.4, 0], arrows: { arabia: 1, anatolia: 1, anatolia_a: 0.4 }, focus: [25, 30, 100] }); grade(c, 'map'); });
+  S(T('eurasia blocks it from the north'), (c) => { c.cam.fov = 36; c.look(V(10, 65 - c.u * 6, 40), V(5, 0, -45)); mapSet(c, { plates: [0.4, 0.5, 1, 0], arrows: { eurasia: 1, arabia: 1, arabia_a: 0.4 }, focus: [5, -40, 100] }); grade(c, 'map'); });
+  S(T('the land between them is forced west'), (c) => { c.cam.fov = 40; path(c, [V(0, 70, 50), V(-50, 60, 40), V(-90, 55, 30)], [V(-10, 0, -5), V(-55, 0, -5), V(-105, 0, 10)]);
+    mapSet(c, { plates: [0.6, 1, 0.6, 0], arrows: { anatolia: 1, arabia: 1, eurasia: 1, arabia_a: 0.5, eurasia_a: 0.5 }, borders: 0.25, focus: [-60, 0, 130] }); grade(c, 'map');
+    const g = c.use2D(); const p = c.project(mp(26.5, 34.8, 1)); INFO.tag(g, c.lt - 1.8, p.x, p.y, 'MEDITERRANEAN SEA', { size: 30, bg: 'rgba(0,0,0,0)', family: FONT.serif, weight: '700', tracking: 6 }); });
+  S(T('to allow that enormous mass'), (c) => { c.cam.fov = 34; orbit(c, V(0, 0, 0), 120, 38, 1.2, 1.45); mapSet(c, { plates: [0.5, 0.7, 0.5, 0.3], focus: [0, 0, 150] }); grade(c, 'map', { temperature: 0.2 }); });
+  cue(T("the earth's crust fractures"), 'crack', { gain: 0.6 });
+  S(T("the earth's crust fractures"), (c) => { c.cam.fov = 40; dolly(c, V(-5, 140, 110), V(-5, 120, 90), V(-5, 0, 5), V(-5, 0, 0)); const k = c.lt / 2.8;
+    mapSet(c, { plates: [0.35, 0.35, 0.35, 0.2], faults: { NAF: k, EAF: k * 1.2, DSF: k, BZ: k * 0.9, ARC: k * 0.8 }, focus: [0, 0, 150] }); grade(c, 'map');
+    const g = c.use2D(); if (c.lt > 2.2) revealText(g, 'FAULTS', 960, 940, { family: FONT.sans, weight: '900', size: 70, color: '#fff', p: c.lt - 2.2, tracking: 24 }); });
+  cue(T('the one that matters here'), 'swell', { dur: 4, gain: 0.4 });
+  S(T('the one that matters here'), (c) => { c.cam.fov = 38; dolly(c, V(25, 60, 60), V(12, 30, 32), V(3, 0, 0), V(1, 0, -2)); const k = smooth(c.lt / 1.5);
+    mapSet(c, { faults: { NAF: 1, EAF: 1, DSF: 1, BZ: 1, ARC: 1, NAF_i: 1 - k * 0.8, DSF_i: 1 - k * 0.8, BZ_i: 1 - k * 0.8, ARC_i: 1 - k * 0.8, EAF_i: 1 + k * 1.2 }, focus: [0, 0, 60] }); grade(c, 'map');
+    const g = c.use2D(); const p = c.project(mp(38.4, 38.1, 1)); INFO.callout(g, c.lt - 1.6, p, 'EAST ANATOLIAN FAULT', null, { side: 1, len: 200, rise: 110, size: 38 }); });
+  cue(T('a scar stretching'), 'wind', { dur: 4, gain: 0.3 });
+  S(T('a scar stretching'), (c) => { c.cam.fov = 46; const ms = c.sets.map;
+    const cp = (lo, la) => { const p = ms.at(lo, la, 0); return V(p.x - 3, Math.max(p.y, 0) + 4.5, p.z + 7); };
+    path(c, [cp(36.4, 36.6), cp(37.65, 37.78), cp(38.85, 38.2), cp(40.2, 38.8)], [ms.at(37.0, 37.38, 0), ms.at(38.3, 38.0, 0), ms.at(39.9, 38.7, 0), ms.at(41, 39.3, 0)], ease.linear);
+    mapSet(c, { faults: { EAF: 1, EAF_i: 2.0, NAF: 1, NAF_i: 0.3 }, focus: [mx(38), mz(38), 25] }); grade(c, 'map'); dof(c, 7, 0.5); });
+  // jagged edges, velcro
+  S(T('the edges of tectonic plates'), (c) => { const b = c.use('block'); c.cam.fov = 34; c.look(V(-10 + c.u * 8, 30, 20), V(-4 + c.u * 8, 4, 0)); b.update(c.t, { teethOnly: true, teeth: { slide: 0, sep: 3 }, houses: false }); grade(c, 'neutral', { temperature: 0.1 }); dof(c, 26, 0.35); });
+  S(T('they are jagged'), (c) => { const b = c.use('block'); c.cam.fov = 32; c.look(V(-14 + c.u * 16, 11, 9), V(-10 + c.u * 16, 5, -1)); b.update(c.t, { teethOnly: true, teeth: { slide: 0, sep: 2.2 }, houses: false }); grade(c, 'neutral', { temperature: 0.1 }); dof(c, 9, 0.8); });
+  const moveT = T('as the plates move against', -0.1);
+  const catchT = T('catch');
+  cue(catchT, 'clunk', { gain: 0.6 });
+  S(moveT, (c) => { const b = c.use('block'); c.cam.fov = 34; c.look(V(0, 26, 17), V(0, 4, -1)); const st = c.t - catchT;
+    const slide = st < 0 ? (st + 3) * 1.4 : 4.2 + Math.sin(Math.min(st, 0.4) * 30) * 0.15 * Math.exp(-st * 4);
+    b.update(c.t, { teethOnly: true, teeth: { slide: slide - 4.2, sep: st < -0.4 ? 0.6 : 0, glow: st > 0 ? 0.4 : 0 }, houses: false }); if (st > 0 && st < 0.3) c.shake(0.8); grade(c, 'neutral', { temperature: 0.1 }); dof(c, 24, 0.3); });
+  S(T('and lock together like velcro'), (c) => { const b = c.use('block'); c.cam.fov = 30; dolly(c, V(3, 19, 12), V(2, 15, 8), V(0, 5, -1), V(0, 5, -1)); b.update(c.t, { teethOnly: true, teeth: { slide: 0, sep: 0, glow: 0.6 + 0.3 * Math.sin(c.t * 6) }, houses: false }); grade(c, 'hell', { saturation: 1.05 }); dof(c, 10, 0.6); });
+  // elastic strain in the block diagram
+  cue(T('the plates keep pushing'), 'creak', { dur: 4, gain: 0.4 });
+  S(T('the plates keep pushing'), (c) => { const b = c.use('block'); c.cam.fov = 34; orbit(c, V(0, -4, 0), 62, 34, 0.5, 0.75); b.update(c.t, { S: 1 + c.u * 3, trace: 0.4 }); grade(c, 'neutral', { temperature: 0.1 }); });
+  S(T('a massive rock barrier'), (c) => { const b = c.use('block'); c.cam.fov = 36; dolly(c, V(6, -4, 34), V(3, -6, 28), V(0, -10, 0), V(0, -11, 0)); b.update(c.t, { S: 4, hideSouth: true, locked: 0.85, stress: 0.55, glow: 0.15 }); grade(c, 'neutral', { temperature: 0.15 });
+    const g = c.use2D(); INFO.callout(g, c.lt - 0.8, c.project(V(0, -12, 0.2)), 'LOCKED', 'the fault is stuck', { side: 1, len: 240, rise: 140 }); });
+  S(T('the surrounding rock slowly compresses'), (c) => { const b = c.use('block'); c.cam.fov = 36; orbit(c, V(0, -2, 0), 58, 40, -0.6, -0.35); b.update(c.t, { S: 4 + c.u * 3, heat: smooth(c.lt / 1.5), trace: 0.6 }); grade(c, 'neutral'); });
+  S(T('storing strain'), (c) => { const b = c.use('block'); c.cam.fov = 30; c.look(V(-4, 9 - c.u * 2, 22 - c.u * 4), V(0, 0, 0)); b.update(c.t, { S: 7 + c.u * 3.5, heat: 1, trace: 0.8 });
+    const g = c.use2D(); const yrs = Math.round(lerp(10, 400, ease.inQuad(c.u)) / 10) * 10; INFO.tag(g, c.lt, 300, 120, `+ ${yrs} YEARS`, { size: 44, align: 'left', family: FONT.mono, weight: '700' }); grade(c, 'neutral'); dof(c, 22, 0.35); });
+  cue(T('the spring tightens'), 'spring', { dur: 6, gain: 0.5 });
+  S(T('the spring tightens'), (c) => { const b = c.use('block'); c.cam.fov = 32; dolly(c, V(16, 10, 20), V(12, 7, 16), V(0, 1.5, 0), V(0, 1.6, 0)); b.update(c.t, { S: 10 + c.u * 2, heat: 0.6, spring: { stretch: 0.3 + c.u * 0.3 } }); grade(c, 'neutral'); dof(c, 18, 0.5); });
+  S(T('and the laws of physics'), (c) => { const b = c.use('block'); c.cam.fov = 26; c.look(V(-6 + c.u * 3, 4, 14), V(0, 1.6, 0)); b.update(c.t, { S: 12 + c.u * 2, heat: 0.7, spring: { stretch: 0.6 + c.u * 0.25 }, shake: 0.05 }); grade(c, 'neutral', { temperature: 0.2 }); dof(c, 14, 0.8); });
+  cue(T('eventually that spring'), 'riser', { dur: 3, gain: 0.45 });
+  S(T('eventually that spring'), (c) => { const b = c.use('block'); c.cam.fov = 22; c.look(V(2, 3.2, 10 - c.u * 2), V(0, 1.7, 0)); b.update(c.t, { S: 14, heat: 0.8, spring: { stretch: 0.9 }, shake: 0.12 }); c.handheld(1.5); grade(c, 'blood'); dof(c, 9, 1.0); });
+}

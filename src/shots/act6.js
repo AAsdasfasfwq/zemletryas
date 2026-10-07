@@ -1,0 +1,154 @@
+// "1 HOUR AFTER", "24 HOURS AFTER", "1 WEEK AFTER": darkness, survivors, abandonment, second quake,
+// cold, miracles, death toll, satellite evidence, anger and arrests.
+import * as THREE from 'three';
+import { T, TE, TP, gapTime } from '../timing.js';
+import { V, dolly, orbit, path, push, grade, dof, fadeIn, fadeOut, quakeAmp } from './dsl.js';
+import { BLACKOUT, RUINS_DAY, GOLD, city, mapSet, mp, card } from './common.js';
+import { ease, clamp, lerp, smooth, noise1 } from '../engine/util.js';
+import { FONT, revealText } from '../overlay/overlay.js';
+import * as INFO from '../overlay/info.js';
+import { CITIES, EPI1, EPI2, mx, mz } from '../assets/regionmap.js';
+
+const HP = [-6.5, 6.5]; // hero building position (x,z)
+export function act6(D) {
+  const { S, whip, flash, dip, cue } = D;
+  card(D, T('one hour after the earthquake'), '1 HOUR AFTER', '05:17 A.M.');
+  cue(T('pitch darkness'), 'music', { mood: 'elegy', dur: 90 });
+  cue(T('pitch darkness'), 'bed', { type: 'aftermath', dur: 92, gain: 0.55 });
+  S(T('pitch darkness'), (c) => { orbit(c, V(0, 0, 0), 160, 60, 0.2, 0.32); c.cam.fov = 40; city(c, { ...BLACKOUT, focus: [0, 0, 120] }); grade(c, 'night', { saturation: 0.8 }); fadeIn(c, 0.6); });
+  S(T('power is out'), (c) => { c.cam.fov = 40; c.look(V(120, 70, 160), V(0, 0, 0)); city(c, { ...BLACKOUT, windows: Math.max(0, 0.6 - c.lt * 0.5), focus: [0, 0, 150] }); grade(c, 'night', { saturation: 0.8 }); });
+  const tLines = T('lines have snapped');
+  cue(tLines + 0.2, 'zap', { gain: 0.6 });
+  S(tLines, (c) => { c.cam.fov = 32; c.look(V(HP[0] + 14, 3, HP[1] + 26), V(HP[0] + 20, 6, HP[1] + 18)); city(c, { ...BLACKOUT, poleSparks: (c.lt * 1.3) % 1.8, focus: [14, 24, 30] }); const s = c.sets.city; s.points[0].position.set(HP[0] + 20, 6, HP[1] + 18); s.points[0].color.set(0x9fc8ff); s.points[0].intensity = Math.max(0, Math.sin(c.t * 37)) * 60; grade(c, 'night'); dof(c, 10, 0.5); });
+  const tSub = T('substations have exploded');
+  cue(tSub + 0.3, 'explosion', { gain: 0.9 });
+  S(tSub, (c) => { c.cam.fov = 36; c.look(V(-40, 12, 90), V(60, 6, -60)); city(c, { ...BLACKOUT, boom: { t0: tSub + 0.3, pos: [70, 0, -80], size: 1.6 }, focus: [40, -40, 120] }); grade(c, 'night'); if (c.t > tSub + 0.3 && c.t < tSub + 0.6) c.shake(0.5); });
+  S(T('millions of tons of concrete dust'), (c) => { c.cam.fov = 38; c.look(V(HP[0] + 14, 2.0, HP[1] + 30), V(HP[0], 2.5, HP[1] + 8)); const s = city(c, { ...BLACKOUT, haze: 1.5, hazeColor: [0.45, 0.43, 0.4], rescuers: true, focus: [HP[0], HP[1] + 10, 30] });
+    s.flashlight(0, [HP[0] + 4, 1.8, HP[1] + 18], [HP[0] - 2 + Math.sin(c.t * 0.7) * 3, 1, HP[1] + 4], 1); s.flashlight(1, [HP[0] - 5, 2, HP[1] + 16], [HP[0] + 2, 0.5, HP[1] + 6 + Math.cos(c.t * 0.5) * 2], 0.8); grade(c, 'night', { saturation: 0.7 }); });
+  cue(T('it stings the eyes'), 'cough', { gain: 0.4 });
+  S(T('it stings the eyes'), (c) => { c.cam.fov = 34; c.look(V(HP[0] + 6.5, 1.5, HP[1] + 25), V(HP[0] + 3, 1.4, HP[1] + 21)); const s = city(c, { ...BLACKOUT, haze: 1.4, hazeColor: [0.45, 0.43, 0.4], focus: [HP[0], HP[1] + 20, 20], feat: [{ kind: 'pj', i: 0, pos: [HP[0] + 3, 0, HP[1] + 21], ry: 0.6, pose: 'cry' }, { kind: 'pj', i: 1, pos: [HP[0] + 1.6, 0, HP[1] + 20.4], ry: 0.9, pose: 'shiver' }] });
+    s.flashlight(0, [HP[0] + 9, 2.2, HP[1] + 26], [HP[0] + 2.5, 1.2, HP[1] + 20.5], 1, 14); grade(c, 'night', { saturation: 0.7 }); dof(c, 4.5, 0.6); });
+  S(T('outside it is below freezing'), (c) => { const m = c.use('macro'); c.cam.fov = 30; c.look(V(1.5, 5 - c.u, 9), V(0, 4.2, 0)); m.update(c.t, { prop: 'thermo', temp: lerp(34, 28, c.u), key: 120, keyColor: 0x9fc0ff, bokeh: false }); grade(c, 'cold'); dof(c, 9, 0.6); });
+  S(T('freezing rain and snow are still falling'), (c) => { c.cam.fov = 34; c.look(V(HP[0] + 2, 2.4, HP[1] + 22), V(HP[0] - 2, 2.8, HP[1] + 12)); const s = city(c, { ...BLACKOUT, snow: 1.2, rain: 0.7, focus: [HP[0], HP[1] + 15, 25] }); s.flashlight(0, [HP[0] + 1, 2, HP[1] + 19], [HP[0] - 4, 4.5, HP[1] + 8], 1, 18); grade(c, 'night'); dof(c, 6, 0.5); });
+  S(T('the streets are scenes'), (c) => { c.cam.fov = 40; c.look(V(30, 2.4, 26), V(-10, 2, 22)); const s = city(c, { ...BLACKOUT, survivors: true, alarmCar: true, focus: [10, 24, 40] }); s.flashlight(1, [8, 1.7, 26], [18, 0.5, 20], 0.7, 12); c.handheld(1.4); grade(c, 'night'); });
+  S(T('people who barely escaped'), (c) => { c.cam.fov = 26; c.look(V(HP[0] + 3.4, 0.25, HP[1] + 24.2), V(HP[0] + 1.6, 0.15, HP[1] + 22)); const s = city(c, { ...BLACKOUT, snowCover: 1, focus: [HP[0], HP[1] + 22, 15], feat: [{ kind: 'pj', i: 2, pos: [HP[0] + 1.4, 0, HP[1] + 21.6], ry: 0.4, pose: 'shiver' }, { kind: 'pj', i: 3, pos: [HP[0] + 2.4, 0, HP[1] + 21.2], ry: -0.3, pose: 'shiver' }] });
+    s.flashlight(0, [HP[0] + 6, 2, HP[1] + 26], [HP[0] + 1.8, 0, HP[1] + 21.5], 0.7, 10); grade(c, 'cold'); dof(c, 2.6, 1.0); });
+  S(T('wearing only pajamas'), (c) => { c.cam.fov = 30; c.look(V(HP[0] + 6 - c.u, 1.4, HP[1] + 27), V(HP[0] + 2, 1.1, HP[1] + 21.4)); const s = city(c, { ...BLACKOUT, focus: [HP[0], HP[1] + 22, 15], feat: [0, 1, 2, 3, 4].map((i) => ({ kind: 'pj', i, pos: [HP[0] + i * 0.9, 0, HP[1] + 21 + (i % 2) * 0.7], ry: 0.3 - i * 0.2, pose: i === 4 ? 'hug' : 'shiver', ph: i })) });
+    s.flashlight(0, [HP[0] + 8, 2.2, HP[1] + 27], [HP[0] + 2, 1, HP[1] + 21], 0.8, 12); grade(c, 'cold'); dof(c, 5.5, 0.6); });
+  S(T('no one understands'), (c) => { c.cam.fov = 24; c.look(V(HP[0] + 3.2, 1.55, HP[1] + 24), V(HP[0] + 2.7, 1.55, HP[1] + 21.4)); const s = city(c, { ...BLACKOUT, focus: [HP[0], HP[1] + 22, 15], feat: [{ kind: 'pj', i: 5, pos: [HP[0] + 2.7, 0, HP[1] + 21.4], ry: Math.sin(c.t * 0.8) * 0.6, pose: 'stand' }] });
+    s.flashlight(0, [HP[0] + 5, 1.6, HP[1] + 25], [HP[0] + 2.7, 1.5, HP[1] + 21.4], 0.6, 6); grade(c, 'cold'); dof(c, 2.6, 1.0); });
+  S(T('cell service is down'), (c) => { const m = c.use('macro'); c.cam.fov = 30; c.look(V(0.5, 7 - c.u, 3.5), V(0, 0.3, 0)); m.update(c.t, { prop: 'phone', key: 40, bokeh: false }); grade(c, 'cold'); dof(c, 7, 0.4); });
+  S(T('towers the roadblocks'), (c) => { c.cam.fov = 36; c.look(V(-110 + 34, 4, 160 + 30), V(-110, 6, 160)); const s = city(c, { ...BLACKOUT, focus: [-110, 160, 50] }); s.flashlight(0, [-110 + 20, 2, 160 + 18], [-110 + 5, 5, 160], 0.8, 30); grade(c, 'night'); });
+  cue(T('car alarms wail'), 'carAlarm', { dur: 5, gain: 0.4 });
+  S(T('car alarms wail'), (c) => { const s0 = c.sets.city; const car = s0.alarmCar; const p = car.position; c.cam.fov = 32; c.look(V(p.x + 6, 1.2, p.z + 5), V(p.x, 0.8, p.z)); city(c, { ...BLACKOUT, alarmCar: true, focus: [p.x, p.z, 20] }); grade(c, 'night'); dof(c, 7.5, 0.6); });
+  cue(T('ruptured gas pipes'), 'hiss', { dur: 3, gain: 0.5 });
+  S(T('ruptured gas pipes'), (c) => { c.cam.fov = 32; c.look(V(HP[0] + 14, 1.2, HP[1] + 16), V(HP[0] + 9.5, 1.0, HP[1] + 12)); const s = city(c, { ...BLACKOUT, gas: true, focus: [HP[0] + 9, HP[1] + 12, 15] }); s.flashlight(0, [HP[0] + 14, 1.8, HP[1] + 17], [HP[0] + 9.5, 0.8, HP[1] + 12], 0.7, 8); grade(c, 'night'); dof(c, 6, 0.6); });
+  const tBeneath = T('and from beneath enormous piles');
+  cue(T('come thousands of cries'), 'cries', { dur: 6, gain: 0.25 });
+  S(tBeneath, (c) => { c.cam.fov = 36; dolly(c, V(HP[0] + 4, 2, HP[1] + 14), V(HP[0] + 10, 20, HP[1] + 30), V(HP[0], 1, HP[1]), V(HP[0], 0, HP[1])); city(c, { ...BLACKOUT, rubbleLights: true, focus: [HP[0], HP[1], 40] }); grade(c, 'night'); });
+  S(T('survivors think perhaps'), (c) => { c.cam.fov = 32; c.look(V(HP[0] + 2.8, 1.7, HP[1] + 21.5), V(HP[0], 2.5, HP[1] + 4)); const s = city(c, { ...BLACKOUT, focus: [HP[0], HP[1] + 10, 25], feat: [{ kind: 'pj', i: 0, pos: [HP[0] + 1.6, 0, HP[1] + 19.6], ry: Math.PI + 0.2, pose: 'stand' }] }); s.flashlight(0, [HP[0] + 1.4, 1.4, HP[1] + 19.2], [HP[0], 1.5, HP[1] + 5], 0.8, 16); grade(c, 'night'); dof(c, 3.8, 0.5); });
+  S(T('or their neighborhood'), (c) => { c.cam.fov = 38; dolly(c, V(HP[0] + 4, 5, HP[1] + 24), V(HP[0] + 20, 45, HP[1] + 70), V(HP[0], 2, HP[1]), V(HP[0], 0, HP[1] - 10)); city(c, { ...BLACKOUT, fires: true, focus: [0, 0, 100] }); grade(c, 'night'); });
+  S(T('no one yet realizes'), (c) => { c.cam.fov = 40; dolly(c, V(mx(37.4), 40, mz(37.2) + 40), V(mx(37.4), 110, mz(37.2) + 80), V(mx(37.4), 0, mz(37.4)), V(mx(37.4), 0, mz(37.6)));
+    mapSet(c, { area: smooth(c.lt / 2.5), rupture: { t: 30, scale: 1.6 }, faults: { EAF: 1, EAF_i: 0.3 }, markers: Object.fromEntries(['Kahramanmaras', 'Gaziantep', 'Antakya', 'Malatya', 'Adiyaman', 'Osmaniye', 'Iskenderun', 'Aleppo', 'Idlib', 'Adana', 'Elbistan'].map((n) => [n, smooth((c.lt - 0.5) / 1)])), borders: 0.5, night: 0.6, focus: [mx(37.4), mz(37.4), 120] }); grade(c, 'map', { saturation: 0.95 });
+    const g = c.use2D(); INFO.tag(g, c.lt - 2.4, 960, 940, 'AN AREA THE SIZE OF A SMALL EUROPEAN COUNTRY', { size: 36, bg: 'rgba(150,20,10,0.75)' }); });
+  S(T("the police aren't coming"), (c) => { const s0 = c.sets.city; const p = s0.ambulanceCrushed.position; c.cam.fov = 30; c.look(V(p.x - 7, 1.0, p.z + 6), V(p.x, 1.2, p.z)); city(c, { ...BLACKOUT, crushedBeacon: 0.25, focus: [p.x, p.z, 20] }); grade(c, 'night'); dof(c, 8, 0.6); });
+  S(T('neither are the ambulances'), (c) => { const s0 = c.sets.city; const p = s0.ambulanceCrushed.position; c.cam.fov = 34; c.look(V(p.x + 9, 2.2, p.z + 7), V(p.x, 1.4, p.z)); city(c, { ...BLACKOUT, crushedBeacon: 0.5, focus: [p.x, p.z, 20] }); grade(c, 'night'); });
+  S(T('their buildings have collapsed too'), (c) => { const s0 = c.sets.city; const p = s0.ambulanceCrushed.position; c.cam.fov = 40; orbit(c, p, 22, 9, 1.0, 1.35); city(c, { ...BLACKOUT, crushedBeacon: 0.5, focus: [p.x, p.z, 30] }); grade(c, 'night'); });
+  S(T('some rescuers are trapped'), (c) => { c.cam.fov = 30; c.look(V(HP[0] + 4, 2.6, HP[1] + 9), V(HP[0] + 1.5, 1.6, HP[1] + 4)); const s = city(c, { ...BLACKOUT, focus: [HP[0], HP[1], 20], feat: [{ kind: 'resc', i: 0, pos: [HP[0] + 1.5, 1.7, HP[1] + 3], ry: 2.0, pose: 'lie' }] }); s.flashlight(0, [HP[0] + 4, 3.5, HP[1] + 8], [HP[0] + 1.5, 1.6, HP[1] + 3.5], 0.3, 8); grade(c, 'night', { saturation: 0.6 }); dof(c, 5, 0.6); });
+  S(T('the cities have been left'), (c) => { c.cam.fov = 40; c.look(V(0, 140 + c.u * 30, 220), V(0, 0, -40)); city(c, { ...BLACKOUT, fires: true, smoke: true, focus: [0, 0, 160] }); grade(c, 'night', { saturation: 0.7 }); fadeOut(c, 0.4); });
+  // Syria at night
+  S(T('in syria the situation is even worse'), (c) => { c.cam.fov = 38; c.look(V(-40 + c.u * 10, 18, 60), V(0, 4, 0)); const s = c.use('syria'); s.update(c.t, { camera: c.cam, area: 'aleppo', mood: 'stormNight', after: true }); grade(c, 'night', { temperature: 0.1 }); });
+  S(T('local rescue teams know'), (c) => { c.cam.fov = 34; c.look(V(-2, 3, 22), V(-1.5, 1.5, 11)); const s = c.use('syria'); s.update(c.t, { camera: c.cam, area: 'aleppo', mood: 'stormNight', after: true, helmets: true }); grade(c, 'night', { temperature: 0.1 }); dof(c, 10, 0.4); });
+  S(T('but they have neither'), (c) => { c.cam.fov = 30; c.look(V(3, 1.4, 16), V(-3, 1.5, 11)); const s = c.use('syria'); s.update(c.t, { camera: c.cam, area: 'aleppo', mood: 'stormNight', after: true, helmets: true }); grade(c, 'night', { temperature: 0.1 }); dof(c, 7, 0.5);
+    const g = c.use2D(); INFO.tag(g, c.lt - 1.5, 420, 160, 'NO CRANES', { size: 38, bg: 'rgba(0,0,0,0.6)' }); INFO.tag(g, c.lt - 2.4, 420, 230, 'NO FUEL', { size: 38, bg: 'rgba(0,0,0,0.6)' }); });
+  cue(T('people claw'), 'dig', { dur: 4, gain: 0.5 });
+  S(T('people claw'), (c) => { c.cam.fov = 26; c.look(V(HP[0] + 2.8, 2.1, HP[1] + 10.5), V(HP[0] + 1.4, 1.6, HP[1] + 8.4)); const s = city(c, { ...BLACKOUT, snow: 0.8, focus: [HP[0], HP[1] + 8, 15], feat: [{ kind: 'pj', i: 1, pos: [HP[0] + 1.2, 1.2, HP[1] + 8.0], ry: Math.PI + 0.3, pose: 'dig' }, { kind: 'pj', i: 3, pos: [HP[0] + 0.2, 1.3, HP[1] + 8.4], ry: Math.PI - 0.4, pose: 'dig', ph: 1 }] });
+    s.flashlight(0, [HP[0] + 3.5, 2.6, HP[1] + 11], [HP[0] + 0.8, 1.2, HP[1] + 7.8], 0.8, 7); grade(c, 'cold'); dof(c, 2.6, 1.0); });
+  const tUnder = T('underneath they can hear');
+  cue(T('children crying'), 'silence', {});
+  S(tUnder, (c) => { c.cam.fov = 30; c.look(V(HP[0] + 1.5, 1.2, HP[1] + 7.5 - c.u * 0.8), V(HP[0] + 0.5, 0.6, HP[1] + 4)); city(c, { ...BLACKOUT, rubbleLights: true, focus: [HP[0], HP[1] + 6, 12] }); grade(c, 'night', { saturation: 0.5 }); dof(c, 3.5, 0.8); fadeOut(c, 0.4); });
+  // ---------------- 24 HOURS AFTER ----------------
+  card(D, T('24 hours after the earthquake'), '24 HOURS AFTER', 'TUESDAY, FEBRUARY 7, 2023');
+  cue(T('by daylight drone'), 'bed', { type: 'helicopter', dur: 7, gain: 0.5 });
+  S(T('by daylight drone'), (c) => { c.cam.fov = 44; c.look(V(-20 + c.u * 30, 150, 10 + c.u * 10), V(-20 + c.u * 30, 0, 9 + c.u * 10)); city(c, { ...RUINS_DAY, excavators: true, rescuers: true, emergency: true, focus: [0, 0, 120] }); grade(c, 'grey'); });
+  S(T('helicopter footage'), (c) => { c.cam.fov = 40; c.look(V(80, 60, 120), V(0, 10, 0)); city(c, { ...RUINS_DAY, excavators: true, rescuers: true, emergency: true, heli: { t0: c.shot.t0, from: [-60, 45, 40], dir: [1, 0.35], speed: 22 }, focus: [0, 0, 120] }); grade(c, 'grey'); });
+  S(T('reveals the scale'), (c) => { orbit(c, V(0, 0, 0), 260, 160, 0.3, 0.5); c.cam.fov = 40; city(c, { ...RUINS_DAY, focus: [0, 0, 200] }); grade(c, 'grey'); });
+  cue(T('but the disaster has already'), 'music', { mood: 'tension', dur: 24 });
+  S(T('but the disaster has already'), (c) => { c.cam.fov = 38; dolly(c, V(mx(37), 40, mz(37.2) + 30), V(mx(37.2), 36, mz(37.8) + 22), V(mx(37), 0, mz(37.3)), V(mx(37.2), 0, mz(38))); mapSet(c, { rupture: { t: 30, scale: 1.6 }, faults: { EAF: 1, CARDAK: 0.3, EAF_i: 0.3 }, area: 0.4, focus: [mx(37.1), mz(37.6), 60] }); grade(c, 'map'); });
+  S(T('the previous afternoon'), (c) => { c.cam.fov = 36; c.look(V(HP[0] + 18, 7, HP[1] + 26), V(HP[0], 2, HP[1] + 4)); city(c, { ...RUINS_DAY, rescuers: true, survivors: true, focus: [HP[0], HP[1], 40] }); grade(c, 'grey');
+    const g = c.use2D(); INFO.lowerThird(g, c.lt, c.dur, 'MONDAY, 1:30 P.M.', 'nine hours after the first shock'); });
+  S(T('while survivors were digging'), (c) => { c.cam.fov = 30; c.look(V(HP[0] + 6, 4.5, HP[1] + 13), V(HP[0], 2.5, HP[1] + 6)); city(c, { ...RUINS_DAY, rescuers: true, focus: [HP[0], HP[1] + 6, 20] }); c.handheld(1); grade(c, 'grey'); dof(c, 8, 0.5); });
+  const tAgain = T('the ground struck again');
+  cue(tAgain + 0.2, 'quake2', { gain: 1.0, dur: 6 });
+  const sec = { t0: TP("buildings that had barely survived") - 0.5 };
+  S(tAgain, (c) => { c.cam.fov = 36; c.look(V(HP[0] + 20, 6, HP[1] + 30), V(HP[0], 3, HP[1] + 4)); city(c, { ...RUINS_DAY, rescuers: true, survivors: true, haze: 0.8 + c.lt * 0.2, second: { ...sec, amp: 0.8 }, focus: [HP[0], HP[1], 40] }); c.shake(1.3); grade(c, 'grey'); });
+  S(T('the first earthquake had transferred'), (c) => { c.cam.fov = 38; dolly(c, V(mx(37.2) - 15, 45, mz(37.5) + 35), V(mx(37.2) - 5, 34, mz(37.8) + 25), V(mx(37.3), 0, mz(37.6)), V(mx(37.3), 0, mz(37.9)));
+    const k = smooth(c.lt / 3); mapSet(c, { rupture: { t: 30, scale: 1.6 }, faults: { EAF: 1, EAF_i: 0.3, CARDAK: k, CARDAK_i: 0.4 + 0.6 * Math.sin(c.t * 6) ** 2 }, focus: [mx(37.3), mz(37.8), 60] }); grade(c, 'map');
+    const g = c.use2D(); const a = c.project(mp(37.1, 37.3, 0.5)), b = c.project(mp(37.2, 38.0, 0.5)); if (!a.behind && !b.behind) { const kk = smooth((c.lt - 0.5) / 2); g.strokeStyle = '#ffb030'; g.lineWidth = 5; g.setLineDash([14, 10]); g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(a.x + (b.x - a.x) * kk, a.y + (b.y - a.y) * kk); g.stroke(); g.setLineDash([]); }
+    INFO.tag(g, c.lt - 1.0, 960, 940, 'STRESS TRANSFER', { size: 38 }); });
+  const tToo = T('that it ruptured too');
+  cue(tToo, 'rupture2', { gain: 0.8 });
+  S(tToo, (c) => { c.cam.fov = 40; const e = mp(EPI2[0], EPI2[1], 0); c.look(V(e.x - 8, 26, e.z + 26), V(e.x, 0, e.z)); mapSet(c, { rupture: { t: 30, scale: 1.6 }, faults: { EAF: 1, EAF_i: 0.3 }, cardak: { t: c.lt * 2 }, focus: [e.x, e.z, 40] }); c.shake(0.5); grade(c, 'map'); });
+  S(T('a second earthquake struck'), (c) => { const g = c.only2D(); INFO.infoMagnitude(g, c.lt, c.dur, { value: '7.5', kicker: 'a second earthquake', note: 'magnitude' }); });
+  cue(sec.t0 + 0.3, 'collapse', { gain: 1.0 });
+  S(T('buildings that had barely survived'), (c) => { const s0 = c.sets.city; const b = s0.secondBuilding || s0.hero; const p = b.position; c.cam.fov = 36; c.look(V(p.x + 26, 5, p.z + 26), V(p.x, 10, p.z)); city(c, { ...RUINS_DAY, haze: 0.8, second: { ...sec, amp: 0.4 }, focus: [p.x, p.z, 40] }); c.shake(0.4); grade(c, 'grey'); });
+  S(T('they buried people'), (c) => { const s0 = c.sets.city; const b = s0.secondBuilding || s0.hero; const p = b.position; c.cam.fov = 34; c.look(V(p.x + 12, 2, p.z + 14), V(p.x, 3, p.z)); city(c, { ...RUINS_DAY, haze: 1.2, second: { ...sec }, focus: [p.x, p.z, 30] }); grade(c, 'grey', { saturation: 0.6 }); dof(c, 14, 0.4); });
+  S(T('and some of the first rescuers'), (c) => { c.cam.fov = 32; c.look(V(HP[0] + 8, 2.5, HP[1] + 14), V(HP[0], 2.5, HP[1] + 6)); city(c, { ...RUINS_DAY, haze: 1.3, rescuers: true, focus: [HP[0], HP[1] + 6, 20] }); grade(c, 'grey', { saturation: 0.6 }); dof(c, 9, 0.5); });
+  cue(T('huge cracks split the roads'), 'crack', { gain: 0.6 });
+  S(T('huge cracks split the roads'), (c) => { const b = c.use('block'); c.cam.fov = 36; c.look(V(1.5, 1.6, 15 - c.u * 6), V(0.2, 0, -6)); b.update(c.t, { S: 15, snap: 1, trace: 0.2 }); grade(c, 'grey', { saturation: 0.85 }); dof(c, 10, 0.3); });
+  S(T('bridges have collapsed'), (c) => { c.cam.fov = 38; c.look(V(-110 + 40, 6, 160 + 34), V(-110, 6, 160)); city(c, { ...RUINS_DAY, snow: 0.4, focus: [-110, 160, 60] }); grade(c, 'grey'); });
+  cue(T('international rescue teams'), 'music', { mood: 'hope', dur: 12 });
+  S(T('international rescue teams'), (c) => { const g = c.use('globe'); c.cam.fov = 32; c.look(V(-6 + c.u * 4, 12, 26), V(0, 4, 0)); g.update(c.t, { spin: -127, tilt: 25, camera: c.cam, arcs: c.lt / 3, marker: [37.2, 37.4], sunDir: [0.6, 0.5, 0.6] }); grade(c, 'space'); });
+  S(T('but damaged highways'), (c) => { c.cam.fov = 38; c.look(V(60, 2.4, 22), V(20, 1.5, 22)); city(c, { ...RUINS_DAY, tod: 'dawnGrey', snow: 1.2, emergency: true, focus: [30, 22, 40] }); grade(c, 'cold'); });
+  cue(T('now the cold becomes'), 'wind', { dur: 8, gain: 0.5 });
+  S(T('now the cold becomes'), (c) => { const m = c.use('macro'); c.cam.fov = 30; c.look(V(1, 3.6, 8), V(0, 3.2, 0)); m.update(c.t, { prop: 'thermo', temp: lerp(30, 22, ease.inOutCubic(c.u)), key: 120, keyColor: 0x9fc0ff, bokeh: false }); grade(c, 'cold'); dof(c, 8, 0.6); });
+  S(T('at night temperatures drop'), (c) => { const g = c.only2D(); INFO.infoCold(g, c.lt, c.dur); });
+  S(T('people pinned beneath concrete'), (c) => { c.cam.fov = 32; c.look(V(HP[0] + 4, 2.4, HP[1] + 10 - c.u), V(HP[0], 0.8, HP[1] + 4)); const s = city(c, { ...BLACKOUT, snow: 1.0, rubbleLights: true, focus: [HP[0], HP[1] + 5, 15] }); s.flashlight(0, [HP[0] + 5, 3, HP[1] + 10], [HP[0], 0.5, HP[1] + 4], 0.5, 10); grade(c, 'cold', { saturation: 0.7 }); dof(c, 6, 0.6); });
+  S(T('in syria no aid'), (c) => { c.cam.fov = 38; c.look(V(300 + 30, 10, 50), V(300, 2, 0)); const s = c.use('syria'); s.update(c.t, { camera: c.cam, area: 'camp', mood: 'winterDusk', snow: 1, fires: true }); grade(c, 'cold'); });
+  S(T('sanctions closed borders'), (c) => { c.cam.fov = 36; c.look(V(mx(36.6) + 4, 26, mz(36.6) + 26), V(mx(36.6), 0, mz(36.6))); mapSet(c, { borders: 1, markers: { Aleppo: 1, Idlib: 1, Antakya: 1 }, focus: [mx(36.6), mz(36.6), 40] }); grade(c, 'map', { saturation: 0.9 });
+    const g = c.use2D(); const p = c.project(mp(36.55, 36.78, 0.4)); if (!p.behind) { const k = ease.outBack(clamp((c.lt - 0.4) / 0.4)); g.save(); g.translate(p.x, p.y); g.scale(k, k); g.strokeStyle = '#ff3b2a'; g.lineWidth = 10; g.beginPath(); g.moveTo(-26, -26); g.lineTo(26, 26); g.moveTo(26, -26); g.lineTo(-26, 26); g.stroke(); g.restore(); }
+    INFO.tag(g, c.lt - 0.8, 960, 940, 'BORDER CLOSED', { size: 40, bg: 'rgba(170,20,10,0.8)' }); });
+  S(T('through the first most critical'), (c) => { c.cam.fov = 34; c.look(V(4, 2.2, 22), V(-2, 1.4, 11)); const s = c.use('syria'); s.update(c.t, { camera: c.cam, area: 'aleppo', mood: 'overcast', after: true, helmets: true }); grade(c, 'grey'); dof(c, 11, 0.4); });
+  // ---------------- 1 WEEK AFTER ----------------
+  card(D, T('one week after the earthquake'), '1 WEEK AFTER', 'FEBRUARY 13, 2023');
+  S(T('even in the freezing air'), (c) => { c.cam.fov = 36; c.look(V(-60 + c.u * 10, 12, 70), V(0, 3, 0)); city(c, { ...RUINS_DAY, haze: 1.2, hazeColor: [0.55, 0.54, 0.5], focus: [0, 0, 80] }); grade(c, 'grey', { saturation: 0.65 }); });
+  S(T('without water or warmth'), (c) => { const g = c.only2D(); INFO.infoSurvival(g, c.lt, c.dur); });
+  cue(T('and yet rescue teams'), 'music', { mood: 'hope', dur: 18 });
+  S(T('and yet rescue teams'), (c) => { c.cam.fov = 34; c.look(V(HP[0] + 9, 3, HP[1] + 15), V(HP[0], 2.5, HP[1] + 6)); const s = city(c, { ...RUINS_DAY, tod: 'dawnGrey', rescuers: true, focus: [HP[0], HP[1] + 6, 20] }); s.points[0].position.set(HP[0], 4, HP[1] + 8); s.points[0].color.set(0xffd8a0); s.points[0].intensity = 120; grade(c, 'warm', { saturation: 0.9 }); dof(c, 10, 0.4); });
+  const tSixth = T('on the sixth and seventh days');
+  cue(T('living babies'), 'applause', { gain: 0.3, dur: 5 });
+  S(tSixth, (c) => { c.cam.fov = 30; c.look(V(HP[0] + 4.5, 2.2, HP[1] + 14), V(HP[0] + 0.5, 2.2, HP[1] + 9)); const s = city(c, { ...RUINS_DAY, tod: 'dawnGrey', focus: [HP[0], HP[1] + 9, 15],
+      feat: [{ kind: 'resc', i: 1, pos: [HP[0] + 0.5, 0.9, HP[1] + 9 + c.lt * 0.25], ry: 0.2, pose: 'carry' }, { kind: 'resc', i: 2, pos: [HP[0] - 1.1, 0.9, HP[1] + 8.6], ry: 0.6, pose: 'point' }, { kind: 'resc', i: 3, pos: [HP[0] + 2, 0.6, HP[1] + 9.5], ry: -0.6, pose: 'wave' }] });
+    s.points[0].position.set(HP[0] + 2, 5, HP[1] + 12); s.points[0].color.set(0xffd09a); s.points[0].intensity = 160; grade(c, 'warm'); dof(c, 5, 0.6); });
+  S(T('whose mothers kept them warm'), (c) => { c.cam.fov = 24; c.look(V(HP[0] + 1.4, 1.8, HP[1] + 12), V(HP[0] + 0.5, 2.0, HP[1] + 9.5)); const s = city(c, { ...RUINS_DAY, tod: 'dawnGrey', focus: [HP[0], HP[1] + 9, 10], feat: [{ kind: 'resc', i: 1, pos: [HP[0] + 0.5, 0.9, HP[1] + 9.6], ry: 0.25, pose: 'carry' }] });
+    s.points[0].position.set(HP[0] + 1, 3, HP[1] + 11); s.points[0].color.set(0xffc890); s.points[0].intensity = 80; grade(c, 'warm'); dof(c, 2.6, 1.0); });
+  S(T('they find teenagers'), (c) => { const m = c.use('macro'); c.cam.fov = 26; c.look(V(1.2, 2.4, 4.6 - c.u * 0.6), V(0, 1.6, 0)); m.update(c.t, { prop: 'concrete', crumble: 0, drip: true, key: 160, keyColor: 0xbfd6ff }); grade(c, 'cold'); dof(c, 4.6, 1.0); });
+  S(T('but these are rare exceptions'), (c) => { orbit(c, V(0, 0, 0), 140, 60, 4.5, 4.7); c.cam.fov = 40; city(c, { ...RUINS_DAY, haze: 1, focus: [0, 0, 120] }); grade(c, 'grey', { saturation: 0.6 }); });
+  cue(T('the official death toll'), 'music', { mood: 'elegy', dur: 10 });
+  S(T('the official death toll'), (c) => { const g = c.only2D(); INFO.infoDeathToll(g, c.lt, c.dur); });
+  cue(T('heavy excavators'), 'excavator', { dur: 7, gain: 0.5 });
+  S(T('heavy excavators'), (c) => { c.cam.fov = 38; c.look(V(30, 9, 44), V(9.5, 3, 28)); city(c, { ...RUINS_DAY, excavators: true, emergency: true, rescuers: true, focus: [10, 28, 40] }); grade(c, 'grey'); });
+  S(T('scooping up the debris'), (c) => { c.cam.fov = 32; c.look(V(16, 4, 36), V(12, 2.5, 30)); city(c, { ...RUINS_DAY, excavators: true, focus: [10, 28, 20] }); grade(c, 'grey'); dof(c, 8, 0.5); });
+  // satellite evidence
+  S(T('scientists receive satellite images'), (c) => { const g = c.use('globe'); c.cam.fov = 30; c.look(V(-6 + c.u * 3, 9, 20), V(0, 5, 3)); g.update(c.t, { spin: -127, tilt: 25, camera: c.cam, sat: { lon: 37.2, lat: 37.4, phase: 0.4 - c.u * 0.8, beam: 1 }, sunDir: [0.4, 0.6, 0.7] }); grade(c, 'space'); });
+  cue(T('what they show is staggering'), 'swell', { dur: 4, gain: 0.5 });
+  S(T('what they show is staggering'), (c) => { c.cam.fov = 38; c.look(V(mx(37.3), 70 - c.u * 10, mz(37.3) + 22), V(mx(37.3), 0, mz(37.4))); mapSet(c, { insar: smooth(c.lt / 1.2), focus: [mx(37.3), mz(37.4), 70] }); grade(c, 'map'); });
+  S(T('turkey has literally shifted'), (c) => { c.cam.fov = 34; c.look(V(mx(37.0) - 6, 26, mz(37.3) + 20), V(mx(37.0), 0, mz(37.4))); mapSet(c, { insar: 0.7, arrows: { satSW: smooth(c.lt / 1), satNE: smooth(c.lt / 1) }, faults: { EAF: 1, EAF_i: 0.5 }, focus: [mx(37), mz(37.4), 40] }); grade(c, 'map');
+    const g = c.use2D(); INFO.tag(g, c.lt - 0.8, 960, 940, 'SOUTHWEST SHIFT ALONG THE FAULT', { size: 36 }); });
+  const tAvg = T('the ground has moved an average');
+  S(tAvg, (c) => { const b = c.use('block'); c.cam.fov = 34; c.look(V(-6 + c.u * 3, 10, 20), V(0, 0, 0)); b.update(c.t, { S: 15, snap: 1, trace: 0.3 }); grade(c, 'neutral');
+    const g = c.use2D(); INFO.infoDisplacement(g, c.t - tAvg, c.dur + 6); });
+  S(T('in some places the displacement'), (c) => { const b = c.use('block'); c.cam.fov = 28; c.look(V(2.5, 4, 8), V(0, 0, 0)); b.update(c.t, { S: 15, snap: 1, trace: 0.3 }); grade(c, 'neutral'); dof(c, 9, 0.5);
+    const g = c.use2D(); INFO.infoDisplacement(g, c.t - tAvg, 20); });
+  // anger
+  cue(T('anger spreads'), 'music', { mood: 'tension', dur: 16 });
+  S(T('anger spreads'), (c) => { c.cam.fov = 34; c.look(V(HP[0] + 6, 1.7, HP[1] + 26), V(HP[0], 4, HP[1] + 6)); city(c, { ...RUINS_DAY, focus: [HP[0], HP[1] + 15, 25], feat: [0, 1, 2, 3, 4, 5].map((i) => ({ kind: 'day', i, pos: [HP[0] - 3 + i * 1.3, 0.18, HP[1] + 19 + (i % 2)], ry: Math.PI + (i - 2.5) * 0.08, pose: i % 2 ? 'point' : 'stand' })) }); grade(c, 'grey'); dof(c, 8, 0.4); });
+  S(T('how could brand new luxury'), (c) => { c.cam.fov = 32; dolly(c, V(2, 3.5, 34), V(6, 4.5, 30), V(26, 10, 14), V(30, 12, 6)); city(c, { ...RUINS_DAY, haze: 0.6, focus: [24, 0, 60] }); grade(c, 'grey');
+    const g = c.use2D(); INFO.tag(g, c.lt - 2.0, 1400, 900, 'ADVERTISED AS SAFE', { size: 40, bg: 'rgba(216,49,47,0.85)' }); });
+  S(T('investigators find cheap sand'), (c) => { const m = c.use('macro'); c.cam.fov = 26; dolly(c, V(3, 3, 5), V(2, 2.4, 4), V(0, 1.1, 0), V(0, 1.1, 0)); m.update(c.t, { prop: 'concrete', crumble: 0.6, key: 300, keyColor: 0xfff0d8 }); grade(c, 'macro'); dof(c, 4.6, 0.8);
+    const g = c.use2D(); INFO.tag(g, c.lt - 0.8, 1450, 880, 'SEA SAND & SHELLS', { size: 36 }); });
+  S(T('and missing support columns'), (c) => { c.cam.fov = 32; c.look(V(-3, 1.6, 20), V(-6.5, 1.6, 12)); city(c, { tod: 'golden', windows: 0.3, focus: [-6, 10, 30], colsRemoved: 3, colGhost: 1 }); grade(c, 'grey', { saturation: 0.35 });
+    const g = c.use2D(); INFO.tag(g, c.lt - 0.4, 960, 900, 'MISSING COLUMNS', { size: 40, bg: 'rgba(216,49,47,0.85)' }); });
+  cue(T('widespread arrests'), 'stamp', { gain: 0.6 });
+  S(T('widespread arrests'), (c) => { const g = c.only2D(); INFO.infoHeadlines(g, c.lt, c.dur); });
+}
